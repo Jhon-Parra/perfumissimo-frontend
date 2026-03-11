@@ -1,0 +1,121 @@
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+    <h1 class="font-serif text-4xl text-charcoal mb-12 tracking-wide text-center uppercase">Tu Carrito</h1>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-12" *ngIf="(cartItems$ | async)?.length; else emptyCart">
+
+        <!-- Cart Items Component -->
+        <div class="lg:col-span-2 space-y-6">
+            <div *ngFor="let item of (cartItems$ | async)"
+                class="flex items-center gap-6 p-6 border border-[#dcdcd4] rounded-lg shadow-sm bg-white">
+                <img [src]="item.product.imageUrl" [alt]="item.product.name" class="w-24 h-24 object-cover rounded-md">
+
+                <div class="flex-grow">
+                    <h3 class="font-serif text-xl tracking-wide text-charcoal">{{ item.product.name }}</h3>
+                    <p class="text-sm text-soft-charcoal mb-4">{{ item.product.notes }}</p>
+                    <p class="font-bold text-lg">${{ item.product.price | number:'1.2-2' }}</p>
+                </div>
+
+                <div class="flex flex-col items-end gap-4">
+                    <button (click)="removeItem(item.product.id)"
+                        class="text-xs text-soft-charcoal hover:text-red-500 transition-colors uppercase tracking-widest flex items-center">
+                        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16">
+                            </path>
+                        </svg>
+                        Quitar
+                    </button>
+
+                    <div class="flex items-center border border-[#dcdcd4] rounded-sm">
+                        <button (click)="updateQuantity(item.product.id, item.quantity - 1)"
+                            class="px-3 py-1 hover:bg-[#ecece5] transition-colors">-</button>
+                        <span class="px-4 py-1 text-sm font-bold border-x border-[#dcdcd4] min-w-[3rem] text-center">{{
+                            item.quantity }}</span>
+                        <button (click)="updateQuantity(item.product.id, item.quantity + 1)"
+                            class="px-3 py-1 hover:bg-[#ecece5] transition-colors">+</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Order Summary -->
+        <div class="lg:col-span-1 border border-[#dcdcd4] rounded-lg p-8 bg-[#F9F9F6] h-fit sticky top-24 shadow-sm">
+            <h2 class="font-serif text-2xl text-charcoal mb-6 uppercase tracking-wide">Resumen del Pedido</h2>
+
+            <div class="space-y-4 text-sm text-soft-charcoal border-b border-[#dcdcd4] pb-6 mb-6">
+                <div class="flex justify-between">
+                    <span>Subtotal</span>
+                    <span class="font-bold text-charcoal">${{ total | number:'1.2-2' }}</span>
+                </div>
+                <div class="flex justify-between">
+                    <span>Envío Estimado</span>
+                    <span class="font-bold text-charcoal">{{ total > 50 ? 'GRATIS' : '$10.00' }}</span>
+                </div>
+            </div>
+
+            <div class="flex justify-between items-end mb-8">
+                <span class="font-serif uppercase tracking-widest text-sm font-bold">Total a Pagar</span>
+                <span class="font-bold text-2xl text-charcoal">${{ (total > 50 ? total : total + 10) | number:'1.2-2'
+                    }}</span>
+            </div>
+
+            <!-- Botón de proceder con estado de carga -->
+            <button (click)="proceedToCheckout()" [disabled]="isProcessing || (cartItems$ | async)?.length === 0"
+                class="w-full btn-primary bg-charcoal text-white hover:bg-black uppercase tracking-widest py-4 text-sm font-bold rounded-md shadow-md hover:shadow-lg transition-all disabled:opacity-75 disabled:cursor-not-allowed flex justify-center items-center">
+                @if (isProcessing) {
+                <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none"
+                    viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor"
+                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                    </path>
+                </svg>
+                Procesando...
+                } @else {
+                Proceder al Pago
+                }
+            </button>
+
+            <!-- Mock Trust Indicators -->
+            <div class="mt-6 flex justify-center space-x-2 grayscale opacity-60">
+                <svg class="h-6" viewBox="0 0 24 24" fill="currentColor">...</svg> <!-- Simulación de íconos de pago -->
+                <span class="text-xs">Pagos procesados de forma segura</span>
+            </div>
+        </div>
+    </div>
+
+    <ng-template #emptyCart>
+        <div *ngIf="orderSuccess; else justEmpty"
+            class="text-center py-20 border border-[#dcdcd4] rounded-xl bg-white shadow-sm">
+            <div
+                class="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6 text-green-500">
+                <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                </svg>
+            </div>
+            <h2 class="font-serif text-3xl text-charcoal mb-4">¡Orden Confirmada!</h2>
+            <p class="text-soft-charcoal mb-8 text-sm max-w-md mx-auto">Gracias por tu compra en Perfumissimo. Recibirás
+                un correo electrónico pronto con la información de rastreo de tu exclusiva esencia.</p>
+            <a routerLink="/"
+                class="btn-primary min-w-[200px] hover:bg-gold hover:text-white transition-colors bg-charcoal text-white tracking-widest uppercase">Seguir
+                Comprando</a>
+        </div>
+
+        <ng-template #justEmpty>
+            <div class="text-center py-20 border border-dashed border-[#dcdcd4] rounded-xl bg-white">
+                <svg class="w-16 h-16 mx-auto mb-6 text-soft-charcoal/50" fill="none" stroke="currentColor"
+                    viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                        d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z">
+                    </path>
+                </svg>
+                <h2 class="font-serif text-2xl text-charcoal mb-2">Tu carrito está vacío</h2>
+                <p class="text-soft-charcoal mb-8 text-sm">Parece que aún no has descubierto tu esencia ideal.</p>
+                <a routerLink="/"
+                    class="btn-primary min-w-[200px] hover:bg-gold hover:text-white transition-colors">EXPLORAR
+                    PERFUMES</a>
+            </div>
+        </ng-template>
+    </ng-template>
+
+</div>

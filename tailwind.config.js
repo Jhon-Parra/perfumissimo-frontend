@@ -1,0 +1,23 @@
+/** @type {import('tailwindcss').Config} */
+module.exports = {
+  content: [
+    "./src/**/*.{html,ts}",
+  ],
+  theme: {
+    extend: {
+      colors: {
+        // Paleta Premium Perfumissimo
+        cream: '#F9F9F6',
+        sage: '#9CA389',
+        gold: '#C2A878',
+        charcoal: '#333333',
+        'soft-charcoal': '#4A4A4A',
+      },
+      fontFamily: {
+        serif: ['"Playfair Display"', 'serif'],
+        sans: ['Montserrat', 'sans-serif'],
+      },
+    },
+  },
+  plugins: [],
+}

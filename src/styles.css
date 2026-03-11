@@ -1,0 +1,37 @@
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600&family=Playfair+Display:ital,wght@0,400;0,600;1,400&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-cream text-charcoal font-sans antialiased;
+  }
+  
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-serif;
+  }
+}
+
+@layer components {
+  /* Botón Principal */
+  .btn-primary {
+    @apply bg-gold text-white font-medium py-2 px-6 rounded-md hover:bg-opacity-90 transition-all duration-300;
+  }
+  
+  /* Botón Secundario (Sage) */
+  .btn-secondary {
+    @apply bg-sage text-white font-medium py-2 px-6 rounded-md hover:bg-opacity-90 transition-all duration-300;
+  }
+
+  /* Outline Button */
+  .btn-outline {
+    @apply border border-charcoal text-charcoal font-medium py-2 px-6 rounded-md hover:bg-charcoal hover:text-white transition-all duration-300;
+  }
+
+  /* Tarjetas de Producto */
+  .product-card {
+    @apply bg-white rounded-2xl shadow-sm hover:shadow-md transition-shadow duration-300 overflow-hidden flex flex-col;
+  }
+}
