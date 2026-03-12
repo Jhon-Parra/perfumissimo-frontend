@@ -2,13 +2,15 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
+import { API_CONFIG } from '../../config/api-config';
+
 @Injectable({
   providedIn: 'root'
 })
 export class AiService {
   constructor(private http: HttpClient) { }
 
-  generateDescription(notasOlfativas: string): Observable<{ descripcion: string }> {
-    return this.http.post<{ descripcion: string }>('http://localhost:3000/api/products/generate-description', { notasOlfativas });
+  generateDescription(nombre: string, notas_olfativas: string): Observable<{ message: string, data: string }> {
+    return this.http.post<{ message: string, data: string }>(`${API_CONFIG.baseUrl}/ai/generate-description`, { nombre, notas_olfativas });
   }
 }

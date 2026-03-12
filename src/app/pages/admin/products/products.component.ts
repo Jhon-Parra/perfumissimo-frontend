@@ -5,17 +5,26 @@ import { FormsModule } from '@angular/forms';
 import { ProductService, Product } from '../../../core/services/product/product.service';
 import { AiService } from '../../../core/services/ai/ai.service';
 import { AuthService } from '../../../core/services/auth.service';
+import Swal from 'sweetalert2';
+import { LowStockBellComponent } from '../../../shared/components/low-stock-bell/low-stock-bell.component';
 
 @Component({
   selector: 'app-products',
   standalone: true,
-  imports: [CommonModule, RouterModule, FormsModule],
+  imports: [CommonModule, RouterModule, FormsModule, LowStockBellComponent],
   templateUrl: './products.component.html',
   styleUrls: ['./products.component.css']
 })
 export class ProductsComponent implements OnInit {
   showForm = false;
   products: Product[] = [];
+  filteredProducts: Product[] = [];
+
+  productFilterText = '';
+  productFilterGender: 'all' | 'mujer' | 'hombre' | 'unisex' = 'all';
+  productFilterStock: 'all' | 'low' | 'out' = 'all';
+  productSort: 'name_asc' | 'price_desc' | 'price_asc' | 'stock_asc' | 'stock_desc' = 'name_asc';
+  private readonly lowStockThreshold = 5;
 
   newProduct = {
     nombre: '',
@@ -25,9 +34,18 @@ export class ProductsComponent implements OnInit {
     stock: 0,
     descripcion: ''
   };
+  editingProductId: string | null = null;
   selectedFile: File | null = null;
   isGeneratingAI = false;
+  editingStockId: string | null = null;
   isSaving = false;
+
+  importFile: File | null = null;
+  importDryRun = false;
+  isImporting = false;
+
+  showDeleteModal = false;
+  productToDelete: string | null = null;
 
   constructor(
     private productService: ProductService,
@@ -42,7 +60,74 @@ export class ProductsComponent implements OnInit {
   loadProducts() {
     this.productService.getProducts().subscribe(res => {
       this.products = res;
+      this.applyProductFilters();
     });
+  }
+
+  applyProductFilters(): void {
+    const q = (this.productFilterText || '').trim().toLowerCase();
+    const gender = this.productFilterGender;
+    const stockFilter = this.productFilterStock;
+
+    let items = (this.products || []).slice();
+
+    if (q) {
+      items = items.filter((p) => {
+        const text = `${p?.nombre || ''} ${(p as any)?.notas_olfativas || ''} ${p?.descripcion || ''}`.toLowerCase();
+        return text.includes(q);
+      });
+    }
+
+    if (gender !== 'all') {
+      items = items.filter((p) => (p.genero || 'unisex') === gender);
+    }
+
+    if (stockFilter === 'out') {
+      items = items.filter((p) => Number(p.stock || 0) === 0);
+    } else if (stockFilter === 'low') {
+      items = items.filter((p) => {
+        const s = Number(p.stock || 0);
+        return s > 0 && s <= this.lowStockThreshold;
+      });
+    }
+
+    const priceNum = (p: Product) => {
+      const raw: any = (p as any)?.precio;
+      const n = typeof raw === 'string' ? Number(raw) : Number(raw ?? 0);
+      return Number.isFinite(n) ? n : 0;
+    };
+    const stockNum = (p: Product) => {
+      const n = Number((p as any)?.stock ?? 0);
+      return Number.isFinite(n) ? n : 0;
+    };
+
+    switch (this.productSort) {
+      case 'price_desc':
+        items.sort((a, b) => priceNum(b) - priceNum(a));
+        break;
+      case 'price_asc':
+        items.sort((a, b) => priceNum(a) - priceNum(b));
+        break;
+      case 'stock_asc':
+        items.sort((a, b) => stockNum(a) - stockNum(b));
+        break;
+      case 'stock_desc':
+        items.sort((a, b) => stockNum(b) - stockNum(a));
+        break;
+      default:
+        items.sort((a, b) => String(a?.nombre || '').localeCompare(String(b?.nombre || ''), 'es'));
+        break;
+    }
+
+    this.filteredProducts = items;
+  }
+
+  clearProductFilters(): void {
+    this.productFilterText = '';
+    this.productFilterGender = 'all';
+    this.productFilterStock = 'all';
+    this.productSort = 'name_asc';
+    this.applyProductFilters();
   }
 
   toggleForm() {
@@ -57,21 +142,117 @@ export class ProductsComponent implements OnInit {
     }
   }
 
+  onImportFileSelected(event: any) {
+    const file = event.target.files[0];
+    if (file) {
+      this.importFile = file;
+    }
+  }
+
+  downloadImportTemplate() {
+    this.productService.downloadImportTemplate().subscribe({
+      next: (blob) => {
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'plantilla_productos.xlsx';
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        window.URL.revokeObjectURL(url);
+      },
+      error: (err) => {
+        console.error('Error descargando plantilla:', err);
+        Swal.fire('Error', 'No se pudo descargar la plantilla.', 'error');
+      }
+    });
+  }
+
+  importProducts() {
+    if (!this.importFile) {
+      Swal.fire('Atención', 'Selecciona un archivo .xlsx o .csv primero.', 'warning');
+      return;
+    }
+
+    this.isImporting = true;
+    this.productService.importFromSpreadsheet(this.importFile, this.importDryRun).subscribe({
+      next: (res: any) => {
+        this.isImporting = false;
+
+        const created = Number(res?.created || 0);
+        const toCreate = Number(res?.to_create || 0);
+        const skipped = Number(res?.skipped || 0);
+        const failed = Number(res?.failed || 0);
+        const errors = Array.isArray(res?.errors) ? res.errors : [];
+
+        const isDryRun = !!res?.dry_run;
+        const title = isDryRun ? 'Validación (sin guardar)' : 'Importación completada';
+
+        let html = `<div style="text-align:left">`;
+        html += `<div><b>${isDryRun ? 'Listos para crear' : 'Creados'}:</b> ${isDryRun ? toCreate : created}</div>`;
+        html += `<div><b>Saltados:</b> ${skipped}</div>`;
+        html += `<div><b>Con error:</b> ${failed}</div>`;
+
+        if (errors.length) {
+          const preview = errors.slice(0, 10)
+            .map((e: any) => `Fila ${e.row}${e.field ? ' (' + e.field + ')' : ''}: ${e.message}`)
+            .join('<br>');
+          html += `<hr style="margin:12px 0"/>`;
+          html += `<div style="font-size:12px"><b>Errores (primeros ${Math.min(10, errors.length)}):</b><br>${preview}</div>`;
+          if (errors.length > 10) {
+            html += `<div style="font-size:12px;margin-top:6px">... y ${errors.length - 10} más</div>`;
+          }
+        }
+        html += `</div>`;
+
+        Swal.fire({
+          title,
+          html,
+          icon: failed ? 'warning' : 'success',
+          confirmButtonColor: '#d4af37'
+        });
+
+        if (!isDryRun && created > 0) {
+          this.loadProducts();
+        }
+      },
+      error: (err) => {
+        console.error('Error importando productos:', err);
+        const msg = err?.error?.error || err?.error?.message || 'No se pudo importar el archivo.';
+        Swal.fire('Error', msg, 'error');
+        this.isImporting = false;
+      }
+    });
+  }
+
   generateAI() {
+    if (!this.newProduct.nombre) {
+      Swal.fire('Atención', 'Para usar la IA, ingresa primero el Nombre del Producto.', 'warning');
+      return;
+    }
     if (!this.newProduct.notas) {
-      alert('Por favor ingresa unas notas olfativas primero.');
+      Swal.fire('Atención', 'Por favor ingresa unas notas olfativas primero.', 'warning');
       return;
     }
 
     this.isGeneratingAI = true;
-    this.aiService.generateDescription(this.newProduct.notas).subscribe({
+    this.aiService.generateDescription(this.newProduct.nombre, this.newProduct.notas).subscribe({
       next: (res) => {
-        this.newProduct.descripcion = res.descripcion;
+        this.newProduct.descripcion = res.data;
         this.isGeneratingAI = false;
+
+        // Mostrar alerta bonita y esperar a que el usuario lea
+        Swal.fire({
+          title: '¡Magia de IA!',
+          text: 'La descripción ha sido generada exitosamente. Revísala en el cuadro de texto.',
+          icon: 'success',
+          confirmButtonText: 'Genial',
+          confirmButtonColor: '#d4af37' // gold
+        });
       },
       error: (err) => {
         console.error(err);
-        alert('Error generando descripción');
+        Swal.fire('Error', 'Ocurrió un error generando la descripción con IA.', 'error');
         this.isGeneratingAI = false;
       }
     });
@@ -79,7 +260,7 @@ export class ProductsComponent implements OnInit {
 
   saveProduct() {
     if (!this.newProduct.nombre || !this.newProduct.precio) {
-      alert("El nombre y el precio son requeridos.");
+      Swal.fire('Oops...', 'El nombre y el precio son requeridos.', 'warning');
       return;
     }
 
@@ -95,29 +276,134 @@ export class ProductsComponent implements OnInit {
       formData.append('imagen', this.selectedFile);
     }
 
-    this.productService.createProduct(formData).subscribe({
-      next: () => {
-        this.isSaving = false;
-        this.loadProducts();
-        this.toggleForm();
-      },
-      error: (err) => {
-        console.error(err);
-        alert('Error al crear el producto');
-        this.isSaving = false;
-      }
-    });
+    if (this.editingProductId) {
+      this.productService.updateProduct(this.editingProductId, formData).subscribe({
+        next: () => {
+          this.isSaving = false;
+          Swal.fire('Actualizado', 'Producto actualizado correctamente', 'success');
+          this.loadProducts();
+          this.toggleForm();
+        },
+        error: (err) => {
+          console.error(err);
+          const errorMsg = err.error?.details ? err.error.details.map((d: any) => `${d.field}: ${d.message}`).join('\n') : err.error?.error || 'Error al actualizar el producto';
+          Swal.fire('Error', errorMsg, 'error');
+          this.isSaving = false;
+        }
+      });
+    } else {
+      this.productService.createProduct(formData).subscribe({
+        next: () => {
+          this.isSaving = false;
+          Swal.fire('Creado', 'Producto creado exitosamente', 'success');
+          this.loadProducts();
+          this.toggleForm();
+        },
+        error: (err) => {
+          console.error(err);
+          const errorMsg = err.error?.details ? err.error.details.map((d: any) => `${d.field}: ${d.message}`).join('\n') : err.error?.error || 'Error al crear el producto';
+          Swal.fire('Error', errorMsg, 'error');
+          this.isSaving = false;
+        }
+      });
+    }
   }
 
-  deleteProduct(id: string) {
-    if (confirm('¿Seguro de eliminar este producto?')) {
-      this.productService.deleteProduct(id).subscribe(() => this.loadProducts());
+  editProduct(product: Product) {
+    this.editingProductId = product.id || null;
+    this.newProduct = {
+      nombre: product.nombre,
+      genero: product.genero || 'unisex',
+      notas: '', // Solo para la IA, no guardamos esto directamente
+      precio: typeof product.precio === 'string' ? parseFloat(product.precio) : (product.precio || 0),
+      stock: product.stock,
+      descripcion: product.descripcion || ''
+    };
+    this.selectedFile = null;
+    this.showForm = true;
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  // --- Funcionalidad Edición Rápida de Stock ---
+  startEditStock(product: Product) {
+    this.editingStockId = product.id || null;
+  }
+
+  cancelEditStock() {
+    this.editingStockId = null;
+  }
+
+  saveStock(product: Product, newStockStr: string) {
+    const newStock = parseInt(newStockStr, 10);
+    if (isNaN(newStock) || newStock < 0) {
+      Swal.fire('Error', 'El stock debe ser un número válido mayor o igual a cero.', 'warning');
+      return;
     }
+
+    if (newStock === product.stock) {
+      this.cancelEditStock();
+      return; // Sin cambios
+    }
+
+    const formData = new FormData();
+    formData.append('stock', newStock.toString());
+
+    if (product.id) {
+      this.productService.updateProduct(product.id, formData).subscribe({
+        next: () => {
+          Swal.fire({
+            title: 'Stock Actualizado',
+            text: `El inventario de "${product.nombre}" ha cambiado a ${newStock} unidades.`,
+            icon: 'success',
+            toast: true,
+            position: 'top-end',
+            showConfirmButton: false,
+            timer: 3000
+          });
+          product.stock = newStock; // Actualizar localmente para inmediatez visual
+          this.applyProductFilters();
+          this.cancelEditStock();
+        },
+        error: (err) => {
+          console.error('Error guardando stock:', err);
+          Swal.fire('Error', 'No se pudo actualizar el stock.', 'error');
+          this.cancelEditStock();
+          this.loadProducts(); // Recargar para volver al valor original en caso de error
+        }
+      });
+    }
+  }
+
+  confirmDelete(id: string) {
+    this.productToDelete = id;
+    this.showDeleteModal = true;
+  }
+
+  executeDelete() {
+    if (this.productToDelete) {
+      this.productService.deleteProduct(this.productToDelete).subscribe({
+        next: () => {
+          this.loadProducts();
+          this.closeDeleteModal();
+        },
+        error: (err) => {
+          console.error('Error deleting product', err);
+          alert('No se pudo eliminar el producto');
+          this.closeDeleteModal();
+        }
+      });
+    }
+  }
+
+  closeDeleteModal() {
+    this.showDeleteModal = false;
+    this.productToDelete = null;
   }
 
   resetForm() {
     this.newProduct = { nombre: '', genero: 'unisex', notas: '', precio: 0, stock: 0, descripcion: '' };
     this.selectedFile = null;
+    this.editingProductId = null;
   }
 
   logout() {

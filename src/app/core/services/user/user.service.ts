@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
 export interface User {
@@ -9,29 +9,29 @@ export interface User {
     email: string;
     telefono: string;
     rol: string;
+    segmento?: string | null;
     creado_en: string;
 }
+
+import { API_CONFIG } from '../../config/api-config';
 
 @Injectable({
     providedIn: 'root'
 })
 export class UserService {
-    private apiUrl = 'http://localhost:3000/api/users';
+    private apiUrl = `${API_CONFIG.baseUrl}/users`;
 
     constructor(private http: HttpClient) { }
 
-    private getHeaders(): HttpHeaders {
-        const token = localStorage.getItem('auth_token');
-        return new HttpHeaders({
-            'Authorization': `Bearer ${token}`
-        });
-    }
-
     getUsers(): Observable<User[]> {
-        return this.http.get<User[]>(this.apiUrl, { headers: this.getHeaders() });
+        return this.http.get<User[]>(this.apiUrl, { withCredentials: true });
     }
 
     updateUserRole(id: string, rol: string): Observable<any> {
-        return this.http.put(`${this.apiUrl}/${id}/role`, { rol }, { headers: this.getHeaders() });
+        return this.http.put(`${this.apiUrl}/${id}/role`, { rol }, { withCredentials: true });
+    }
+
+    updateUserSegment(id: string, segmento: string | null): Observable<any> {
+        return this.http.put(`${this.apiUrl}/${id}/segment`, { segmento }, { withCredentials: true });
     }
 }

@@ -3,11 +3,12 @@ import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { UserService, User } from '../../../core/services/user/user.service';
+import { LowStockBellComponent } from '../../../shared/components/low-stock-bell/low-stock-bell.component';
 
 @Component({
   selector: 'app-users',
   standalone: true,
-  imports: [CommonModule, RouterModule, FormsModule],
+  imports: [CommonModule, RouterModule, FormsModule, LowStockBellComponent],
   templateUrl: './users.component.html',
   styleUrls: ['./users.component.css']
 })
@@ -52,6 +53,29 @@ export class UsersComponent implements OnInit {
       });
     } else {
       user.rol = originalRole; // Revertir si el usuario cancela la alerta
+    }
+  }
+
+  changeUserSegment(user: User, newSegment: string) {
+    const original = user.segmento || '';
+    const next = (newSegment || '').trim();
+
+    // Evitar llamadas si no hay cambios reales
+    if (original.trim() === next) return;
+
+    user.segmento = next;
+
+    if (confirm(`Asignar segmento "${next || 'SIN SEGMENTO'}" a ${user.email}?`)) {
+      this.userService.updateUserSegment(user.id, next.length > 0 ? next : null).subscribe({
+        next: () => {},
+        error: (err) => {
+          console.error(err);
+          alert('Error al actualizar segmento');
+          user.segmento = original;
+        }
+      });
+    } else {
+      user.segmento = original;
     }
   }
 }

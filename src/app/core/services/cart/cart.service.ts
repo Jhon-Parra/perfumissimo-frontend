@@ -58,6 +58,15 @@ export class CartService {
     this.updateCart([]);
   }
 
+  clearCartStorage(): void {
+    this.itemsSubject.next([]);
+    try {
+      localStorage.removeItem('perfumissimo_cart');
+    } catch {
+      // ignore
+    }
+  }
+
   get total(): number {
     return this.items.reduce((sum, item) => sum + (item.product.price * item.quantity), 0);
   }

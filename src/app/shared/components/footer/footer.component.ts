@@ -1,12 +1,56 @@
 import { Component } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { RouterModule } from '@angular/router';
+import { SettingsService, Settings } from '../../../core/services/settings/settings.service';
 
 @Component({
   selector: 'app-footer',
   standalone: true,
-  imports: [],
+  imports: [CommonModule, RouterModule],
   templateUrl: './footer.component.html',
   styleUrl: './footer.component.css'
 })
 export class FooterComponent {
+  settings: Settings | null = null;
+  whatsappUrl = '';
+  instagramUrl = '';
+  facebookUrl = '';
 
+  constructor(private settingsService: SettingsService) {}
+
+  ngOnInit() {
+    this.settingsService.getSettings().subscribe({
+      next: (s) => {
+        this.settings = s;
+        this.whatsappUrl = this.buildWhatsappUrl(s?.whatsapp_number || '', s?.whatsapp_message || '');
+        this.instagramUrl = this.normalizeExternalUrl(s?.instagram_url || '', 'instagram.com');
+        this.facebookUrl = this.normalizeExternalUrl(s?.facebook_url || '', 'facebook.com');
+      },
+      error: () => {
+        this.settings = null;
+        this.whatsappUrl = '';
+        this.instagramUrl = '';
+        this.facebookUrl = '';
+      }
+    });
+  }
+
+  private normalizeExternalUrl(raw: string, expectedHost: string): string {
+    const value = (raw || '').trim();
+    if (!value) return '';
+    if (/^https?:\/\//i.test(value)) return value;
+    if (new RegExp(expectedHost.replace(/\./g, '\\.') + '\\/', 'i').test(value) || value.startsWith('www.')) {
+      return `https://${value.replace(/^https?:\/\//i, '')}`;
+    }
+    const handle = value.startsWith('@') ? value.slice(1) : value;
+    return `https://${expectedHost}/${handle.replace(/^\/+/, '')}`;
+  }
+
+  private buildWhatsappUrl(numberRaw: string, messageRaw: string): string {
+    const number = (numberRaw || '').replace(/\D/g, '');
+    if (!number) return '';
+    const message = (messageRaw || '').trim();
+    const base = `https://wa.me/${number}`;
+    return message ? `${base}?text=${encodeURIComponent(message)}` : base;
+  }
 }

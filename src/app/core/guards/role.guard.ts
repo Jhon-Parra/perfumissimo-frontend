@@ -24,7 +24,7 @@ export const roleGuard: CanActivateFn = (route, state) => {
     const currentRole = authService.getUserRole();
 
     if (!authService.isAuthenticated()) {
-        router.navigate(['/auth/login'], { queryParams: { returnUrl: state.url } });
+        router.navigate(['/login'], { queryParams: { returnUrl: state.url } });
         return false;
     }
 
@@ -33,8 +33,6 @@ export const roleGuard: CanActivateFn = (route, state) => {
         router.navigate(['/access-denied']);
         return false;
     }
-
-    return true;
 
     return true;
 };

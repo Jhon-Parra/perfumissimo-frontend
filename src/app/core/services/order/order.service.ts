@@ -2,28 +2,111 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
-export interface OrderCheckoutDetails {
-  usuario_id: string; // Temporarily passed until generic JWT covers it
-  direccion_envio: string;
-  detalles: {
-    producto_id: string;
-    cantidad: number;
-  }[];
+export interface CartItemForOrder {
+  product_id: string;
+  quantity: number;
+  price: number;
 }
+
+export interface CreateOrderDto {
+  total: number;
+  shipping_address: string;
+  items: CartItemForOrder[];
+  transaction_code?: string;
+}
+
+export interface OrderItem {
+  producto_id: string;
+  nombre: string;
+  cantidad: number;
+  precio_unitario: number;
+  subtotal: number;
+  imagen_url?: string;
+}
+
+export interface Order {
+  id: string;
+  total: number;
+  estado: 'PENDIENTE' | 'PAGADO' | 'PROCESANDO' | 'ENVIADO' | 'CANCELADO' | 'ENTREGADO';
+  direccion_envio: string;
+  codigo_transaccion?: string;
+  creado_en: string;
+  items: OrderItem[];
+  // Admin fields
+  cliente_nombre?: string;
+  cliente_email?: string;
+  total_items?: number;
+}
+
+import { API_CONFIG } from '../../config/api-config';
 
 @Injectable({
   providedIn: 'root'
 })
 export class OrderService {
-  private apiUrl = 'http://localhost:3000/api/orders';
+  private apiUrl = `${API_CONFIG.baseUrl}/orders`;
 
   constructor(private http: HttpClient) { }
 
-  checkout(orderData: OrderCheckoutDetails): Observable<any> {
-    return this.http.post(`${this.apiUrl}/checkout`, orderData);
+  createOrder(orderData: CreateOrderDto): Observable<{ message: string; orderId: string }> {
+    return this.http.post<{ message: string; orderId: string }>(
+      this.apiUrl,
+      orderData,
+      { withCredentials: true }
+    );
   }
 
-  getAdminStats(): Observable<any> {
-    return this.http.get(`${this.apiUrl}/stats`);
+  getMyOrders(): Observable<Order[]> {
+    return this.http.get<Order[]>(`${this.apiUrl}/my-orders`, { withCredentials: true });
+  }
+
+  getMyOrderById(orderId: string): Observable<Order> {
+    return this.http.get<Order>(`${this.apiUrl}/my-orders/${encodeURIComponent(orderId)}`, { withCredentials: true });
+  }
+
+  getAllOrders(filters?: { status?: string; q?: string }): Observable<Order[]> {
+    const status = (filters?.status || '').trim();
+    const q = (filters?.q || '').trim();
+    const params = new URLSearchParams();
+    if (status) params.set('status', status);
+    if (q) params.set('q', q);
+    const suffix = params.toString() ? `?${params.toString()}` : '';
+    return this.http.get<Order[]>(`${this.apiUrl}${suffix}`, { withCredentials: true });
+  }
+
+  getAdminOrderById(orderId: string): Observable<Order> {
+    return this.http.get<Order>(`${this.apiUrl}/${orderId}`, { withCredentials: true });
+  }
+
+  updateOrderStatus(orderId: string, estado: string): Observable<any> {
+    return this.http.put(
+      `${this.apiUrl}/${orderId}/status`,
+      { estado },
+      { withCredentials: true }
+    );
+  }
+
+  getStatusLabel(estado: string): string {
+    const labels: Record<string, string> = {
+      'PENDIENTE': 'Pendiente',
+      'PAGADO': 'Pagado',
+      'PROCESANDO': 'Procesando',
+      'ENVIADO': 'Enviado',
+      'CANCELADO': 'Cancelado',
+      'ENTREGADO': 'Entregado'
+    };
+    return labels[estado] || estado;
+  }
+
+  getStatusColor(estado: string): string {
+    const colors: Record<string, string> = {
+      'PENDIENTE': '#f59e0b',
+      'PAGADO': '#10b981',
+      'PROCESANDO': '#0ea5e9',
+      'ENVIADO': '#3b82f6',
+      'CANCELADO': '#ef4444',
+      'ENTREGADO': '#8b5cf6'
+    };
+    return colors[estado] || '#6b7280';
   }
 }

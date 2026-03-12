@@ -1,0 +1,40 @@
+
+:host {
+  display: block;
+}
+
+.navbar-row {
+  height: 80px;
+  overflow: visible;
+}
+
+.navbar-logo-wrap {
+  position: relative;
+  height: 100%;
+  width: 180px;
+  overflow: visible;
+}
+
+.navbar-logo {
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  height: var(--logo-h-mobile, 96px);
+  width: auto;
+  z-index: 20;
+}
+
+@media (min-width: 1024px) {
+  .navbar-row {
+    height: 88px;
+  }
+
+  .navbar-logo-wrap {
+    width: 220px;
+  }
+
+  .navbar-logo {
+    height: var(--logo-h-desktop, 112px);
+  }
+}

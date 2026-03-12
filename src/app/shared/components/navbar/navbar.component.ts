@@ -1,29 +1,42 @@
-import { Component } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { Component, OnDestroy } from '@angular/core';
+import { RouterLink, Router, NavigationEnd } from '@angular/router';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { CartService } from '../../../core/services/cart/cart.service';
+import { FavoritesService } from '../../../core/services/favorites/favorites.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { SettingsService, Settings } from '../../../core/services/settings/settings.service';
-import { Observable, map } from 'rxjs';
+import { LowStockBellComponent } from '../low-stock-bell/low-stock-bell.component';
+import { Observable, Subscription, filter, map } from 'rxjs';
+import { API_CONFIG } from '../../../core/config/api-config';
 
 @Component({
   selector: 'app-navbar',
   standalone: true,
-  imports: [RouterLink, CommonModule],
+  imports: [RouterLink, CommonModule, FormsModule, LowStockBellComponent],
   templateUrl: './navbar.component.html',
   styleUrls: ['./navbar.component.css']
 })
 export class NavbarComponent {
   cartItemCount$!: Observable<number>;
+  favoritesCount$!: Observable<number>;
   settings: Settings | null = null;
+  searchTerm = '';
+  isAdminRoute = false;
+  private navSub?: Subscription;
 
   constructor(
     private cartService: CartService,
+    private favoritesService: FavoritesService,
     public authService: AuthService,
-    private settingsService: SettingsService
+    private settingsService: SettingsService,
+    private router: Router
   ) {
     this.cartItemCount$ = this.cartService.items$.pipe(
       map(items => items.reduce((acc, item) => acc + item.quantity, 0))
+    );
+    this.favoritesCount$ = this.favoritesService.favorites$.pipe(
+      map(items => items.length)
     );
   }
 
@@ -32,9 +45,47 @@ export class NavbarComponent {
       next: (data) => this.settings = data,
       error: (err) => console.error('Error cargando configuraciones', err)
     });
+
+    this.isAdminRoute = this.router.url.startsWith('/admin');
+    this.navSub = this.router.events
+      .pipe(filter((e): e is NavigationEnd => e instanceof NavigationEnd))
+      .subscribe((e) => {
+        this.isAdminRoute = e.urlAfterRedirects.startsWith('/admin');
+      });
+  }
+
+  ngOnDestroy(): void {
+    this.navSub?.unsubscribe();
+  }
+
+  getLogoUrl(): string {
+    const url = (this.settings?.logo_url || '').trim();
+    if (!url) return 'assets/images/logo.png';
+    if (url.startsWith('http') || url.startsWith('data:')) return url;
+    return `${API_CONFIG.serverUrl}${url.startsWith('/') ? '' : '/'}${url}`;
+  }
+
+  getLogoCssVars(): Record<string, string> {
+    const mobile = Number(this.settings?.logo_height_mobile ?? 96);
+    const desktop = Number(this.settings?.logo_height_desktop ?? 112);
+
+    const safeMobile = Number.isFinite(mobile) ? Math.min(Math.max(mobile, 24), 220) : 96;
+    const safeDesktop = Number.isFinite(desktop) ? Math.min(Math.max(desktop, 24), 260) : 112;
+
+    return {
+      '--logo-h-mobile': `${safeMobile}px`,
+      '--logo-h-desktop': `${safeDesktop}px`,
+    };
   }
 
   logout() {
     this.authService.logout();
+  }
+
+  onSearch() {
+    if (this.searchTerm.trim()) {
+      this.router.navigate(['/catalog'], { queryParams: { q: this.searchTerm.trim() }, queryParamsHandling: 'merge' });
+      this.searchTerm = ''; // Limpiar input después de buscar
+    }
   }
 }

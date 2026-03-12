@@ -1,4 +1,4 @@
-import { ApplicationConfig } from '@angular/core';
+import { ApplicationConfig, LOCALE_ID, DEFAULT_CURRENCY_CODE } from '@angular/core';
 import { provideRouter } from '@angular/router';
 import { provideHttpClient, withFetch, withInterceptors } from '@angular/common/http';
 import { authInterceptor } from './core/interceptors/auth.interceptor';
@@ -11,6 +11,8 @@ export const appConfig: ApplicationConfig = {
     provideHttpClient(
       withFetch(),
       withInterceptors([authInterceptor])
-    )
+    ),
+    { provide: LOCALE_ID, useValue: 'es-CO' },
+    { provide: DEFAULT_CURRENCY_CODE, useValue: 'COP' }
   ]
 };

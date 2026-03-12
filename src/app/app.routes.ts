@@ -1,50 +1,85 @@
 import { Routes } from '@angular/router';
 
-import { HomeComponent } from './pages/home/home.component';
-import { CheckoutComponent } from './pages/checkout/checkout.component';
-import { LoginComponent } from './pages/auth/login/login.component';
-import { DashboardComponent } from './pages/admin/dashboard/dashboard.component';
-import { ProductsComponent } from './pages/admin/products/products.component';
-import { SettingsComponent } from './pages/admin/settings/settings.component';
-import { UsersComponent } from './pages/admin/users/users.component';
-import { CatalogComponent } from './pages/store/catalog/catalog.component';
-import { ContactComponent } from './pages/store/contact/contact.component';
 import { authGuard } from './core/guards/auth.guard';
 import { roleGuard } from './core/guards/role.guard';
 
 export const routes: Routes = [
-    { path: '', component: HomeComponent },
     {
-        path: 'checkout',
-        component: CheckoutComponent,
+        path: '',
+        loadComponent: () => import('./pages/home/home.component').then(m => m.HomeComponent)
+    },
+    {
+        path: 'product/:id',
+        loadComponent: () => import('./pages/store/product-detail/product-detail.component').then(m => m.ProductDetailComponent)
+    },
+    {
+        path: 'order-success/:id',
+        loadComponent: () => import('./pages/store/order-success/order-success.component').then(m => m.OrderSuccessComponent),
         canActivate: [authGuard]
     },
-    { path: 'login', component: LoginComponent },
-    { path: 'catalog', component: CatalogComponent },
-    { path: 'contact', component: ContactComponent },
+    {
+        path: 'checkout',
+        loadComponent: () => import('./pages/store/checkout/checkout.component').then(m => m.CheckoutComponent),
+        canActivate: [authGuard]
+    },
+    { path: 'login', loadComponent: () => import('./pages/auth/login/login.component').then(m => m.LoginComponent) },
+    { path: 'catalog', loadComponent: () => import('./pages/store/catalog/catalog.component').then(m => m.CatalogComponent) },
+    { path: 'manual', loadComponent: () => import('./pages/store/manual/manual.component').then(m => m.ManualComponent) },
+    { path: 'contact', loadComponent: () => import('./pages/store/contact/contact.component').then(m => m.ContactComponent) },
+    {
+        path: 'profile',
+        loadComponent: () => import('./pages/store/profile/profile.component').then(m => m.ProfileComponent),
+        canActivate: [authGuard]
+    },
+    {
+        path: 'favorites',
+        loadComponent: () => import('./pages/store/favorites/favorites.component').then(m => m.FavoritesComponent),
+        canActivate: [authGuard]
+    },
+    {
+        path: 'my-orders',
+        loadComponent: () => import('./pages/store/my-orders/my-orders.component').then(m => m.MyOrdersComponent),
+        canActivate: [authGuard]
+    },
     {
         path: 'admin',
-        component: DashboardComponent,
+        loadComponent: () => import('./pages/admin/dashboard/dashboard.component').then(m => m.DashboardComponent),
         canActivate: [authGuard, roleGuard],
         data: { roles: ['SUPERADMIN', 'ADMIN', 'VENTAS', 'PRODUCTOS'] }
     },
     {
         path: 'admin/products',
-        component: ProductsComponent,
+        loadComponent: () => import('./pages/admin/products/products.component').then(m => m.ProductsComponent),
         canActivate: [authGuard, roleGuard],
         data: { roles: ['SUPERADMIN', 'ADMIN', 'PRODUCTOS'] }
     },
     {
+        path: 'admin/orders',
+        loadComponent: () => import('./pages/admin/orders/orders.component').then(m => m.OrdersComponent),
+        canActivate: [authGuard, roleGuard],
+        data: { roles: ['SUPERADMIN', 'ADMIN', 'VENTAS'] }
+    },
+    {
         path: 'admin/settings',
-        component: SettingsComponent,
+        loadComponent: () => import('./pages/admin/settings/settings.component').then(m => m.SettingsComponent),
+        canActivate: [authGuard, roleGuard],
+        data: { roles: ['SUPERADMIN', 'ADMIN'] }
+    },
+    {
+        path: 'admin/promotions',
+        loadComponent: () => import('./pages/admin/promotions/promotions.component').then(m => m.PromotionsComponent),
         canActivate: [authGuard, roleGuard],
         data: { roles: ['SUPERADMIN', 'ADMIN'] }
     },
     {
         path: 'admin/users',
-        component: UsersComponent,
+        loadComponent: () => import('./pages/admin/users/users.component').then(m => m.UsersComponent),
         canActivate: [authGuard, roleGuard],
         data: { roles: ['SUPERADMIN'] }
+    },
+    {
+        path: 'access-denied',
+        loadComponent: () => import('./pages/access-denied/access-denied.component').then(m => m.AccessDeniedComponent)
     },
     { path: '**', redirectTo: '' }
 ];

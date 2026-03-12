@@ -58,7 +58,7 @@ export class LoginComponent implements OnInit {
 
             if (returnUrl) {
               this.router.navigateByUrl(returnUrl);
-            } else if (res.user && res.user.rol === 'ADMIN') {
+            } else if (res.user && ['ADMIN', 'SUPERADMIN', 'VENTAS', 'PRODUCTOS'].includes(res.user.rol)) {
               this.router.navigate(['/admin']);
             } else {
               this.router.navigate(['/catalog']); // A la tienda por defecto

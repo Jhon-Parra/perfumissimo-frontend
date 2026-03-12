@@ -1,12 +1,16 @@
-<div class="bg-[#ecece5] product-card border border-transparent p-4 pb-6 group cursor-pointer w-full relative">
+<div (click)="openDetail()" class="bg-[#ecece5] product-card border border-transparent p-4 pb-6 group cursor-pointer w-full relative">
     <!-- Badges -->
-    <div class="absolute top-4 left-4 z-10">
+    <div class="absolute top-4 left-4 z-10 flex flex-col gap-1">
         <span class="bg-gold text-white text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded-sm shadow-sm"
             *ngIf="product.isNew">NUEVO</span>
+        <span class="bg-red-500 text-white text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded-sm shadow-sm"
+            *ngIf="product.tiene_promocion">OFERTA</span>
     </div>
-    <div
-        class="absolute top-4 right-4 z-10 w-8 h-8 bg-white/70 backdrop-blur-sm rounded-full flex items-center justify-center hover:bg-white hover:text-gold transition-colors shadow-sm">
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
+    <div (click)="toggleFavorite($event)"
+        class="absolute top-4 right-4 z-10 w-8 h-8 backdrop-blur-sm rounded-full flex items-center justify-center transition-colors shadow-sm cursor-pointer"
+        [ngClass]="isFavorite ? 'text-red-500 hover:text-red-600 bg-white' : 'text-soft-charcoal hover:text-red-500 hover:bg-white bg-white/70'">
+        <svg class="w-4 h-4 transition-all duration-300" [ngClass]="isFavorite ? 'fill-current' : 'fill-none'"
+            stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
             <path stroke-linecap="round" stroke-linejoin="round"
                 d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z">
             </path>
@@ -17,7 +21,8 @@
     <div class="relative w-full aspect-[4/5] bg-transparent flex items-center justify-center overflow-hidden mb-6">
         <div class="absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-black/5 to-transparent mix-blend-multiply">
         </div>
-        <img [src]="product.imageUrl" [alt]="product.name"
+        <img [src]="product.imageUrl || 'https://images.unsplash.com/photo-1594035910387-fea47714263f?q=80&w=800&auto=format&fit=crop'" [alt]="product.name"
+            loading="lazy" decoding="async"
             class="object-contain h-5/6 max-w-[80%] transition-transform duration-700 group-hover:scale-105 filter drop-shadow-xl" />
     </div>
 
@@ -34,8 +39,18 @@
         </span>
 
         <h3 class="font-sans font-bold text-charcoal text-sm uppercase tracking-widest mb-1">{{ product.name }}</h3>
-        <p class="text-[11px] text-soft-charcoal mb-2 font-medium">Notas: {{ product.notes }}</p>
-        <p class="font-serif font-bold text-lg text-charcoal mb-3">{{ product.price | currency }}</p>
+        <p class="text-[11px] text-soft-charcoal mb-2 font-medium line-clamp-3 overflow-hidden text-ellipsis"
+            title="{{ product.notes }}">Notas: {{ product.notes }}</p>
+        
+        <!-- Price with discount -->
+        <div class="mb-3" *ngIf="product.precio_con_descuento; else normalPrice">
+            <p class="font-serif font-bold text-lg text-red-500 line-through text-sm">{{ product.precio | currency:'COP':'symbol-narrow' }}</p>
+            <p class="font-serif font-bold text-xl text-charcoal">{{ product.precio_con_descuento | currency:'COP':'symbol-narrow' }}</p>
+            <p class="text-[10px] text-sage font-bold tracking-widest uppercase mt-1">Ahorra {{ getSavings() | currency:'COP':'symbol-narrow':'1.0-0' }}</p>
+        </div>
+        <ng-template #normalPrice>
+            <p class="font-serif font-bold text-lg text-charcoal mb-3">{{ product.price | currency:'COP':'symbol-narrow' }}</p>
+        </ng-template>
 
         <!-- Social Proof Badge -->
         <div
@@ -46,7 +61,7 @@
         </div>
 
         <!-- Add to Cart Button -->
-        <button (click)="addToCart()"
+        <button (click)="addToCart($event)"
             class="w-full btn-secondary mt-2 px-4 py-3 text-xs tracking-widest uppercase transition-all duration-300">
             Añadir al Carrito
         </button>

@@ -1,0 +1,181 @@
+<div class="min-h-screen bg-[#f5f5f0] py-12">
+    <div class="max-w-6xl mx-auto px-4">
+
+        <!-- Breadcrumb -->
+        <nav class="text-sm text-gray-500 mb-8">
+            <a routerLink="/" class="hover:text-charcoal transition-colors">Inicio</a>
+            <span class="mx-2">›</span>
+            <a routerLink="/catalog" class="hover:text-charcoal transition-colors">Catálogo</a>
+            <span class="mx-2">›</span>
+            <span class="text-charcoal font-medium">Checkout</span>
+        </nav>
+
+        <!-- CHECKOUT FORM -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+
+            <!-- Left: Shipping Form -->
+            <div class="lg:col-span-2">
+                <h1 class="text-3xl font-serif font-bold text-charcoal mb-8 tracking-wide">FINALIZAR PEDIDO</h1>
+
+                <!-- Error -->
+                <div *ngIf="errorMsg"
+                    class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-6 text-sm">
+                    {{ errorMsg }}
+                </div>
+
+                <!-- Shipping Address -->
+                <div class="bg-white border border-gray-100 p-6 mb-6">
+                    <h2 class="font-semibold text-charcoal mb-4 text-sm uppercase tracking-widest">Información de Envío
+                    </h2>
+
+                    <div class="mb-4">
+                        <label class="block text-xs text-gray-500 mb-1 uppercase tracking-wider">Nombre completo</label>
+                        <input type="text" [value]="authService.getUserFullName()" readonly
+                            class="w-full border border-gray-200 px-3 py-2 text-sm bg-gray-50 text-gray-600 cursor-not-allowed rounded">
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="block text-xs text-gray-500 mb-1 uppercase tracking-wider">Correo
+                            electrónico</label>
+                        <input type="email" [value]="authService.getUserEmail()" readonly
+                            class="w-full border border-gray-200 px-3 py-2 text-sm bg-gray-50 text-gray-600 cursor-not-allowed rounded">
+                    </div>
+
+                    <div>
+                        <label class="block text-xs text-gray-500 mb-1 uppercase tracking-wider">Dirección de envío
+                            *</label>
+                        <textarea [(ngModel)]="shippingAddress" rows="3"
+                            placeholder="Ej: Calle 123 #45-67, Barrio, Ciudad"
+                            class="w-full border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:border-charcoal transition-colors resize-none rounded"></textarea>
+                    </div>
+                </div>
+
+                <!-- Payment Method -->
+                <div class="bg-white border border-gray-100 p-6">
+                    <h2 class="font-semibold text-charcoal mb-4 text-sm uppercase tracking-widest">Método de Pago</h2>
+
+                    <div class="space-y-3">
+                        <label class="flex items-start gap-3 p-4 border rounded cursor-pointer"
+                            [ngClass]="paymentMethod === 'COD' ? 'border-gold bg-gold/5' : 'border-gray-200 bg-white'">
+                            <input type="radio" name="paymentMethod" value="COD" [(ngModel)]="paymentMethod" (change)="onPaymentMethodChange()" class="mt-1" />
+                            <div>
+                                <p class="text-sm font-medium text-charcoal">Pago contra entrega</p>
+                                <p class="text-xs text-gray-500">Paga cuando recibas tu pedido</p>
+                            </div>
+                        </label>
+
+                        <label class="flex items-start gap-3 p-4 border rounded cursor-pointer"
+                            [ngClass]="paymentMethod === 'WOMPI_PSE' ? 'border-gold bg-gold/5' : 'border-gray-200 bg-white'">
+                            <input type="radio" name="paymentMethod" value="WOMPI_PSE" [(ngModel)]="paymentMethod" (change)="onPaymentMethodChange()" class="mt-1" />
+                            <div>
+                                <p class="text-sm font-medium text-charcoal">Bancolombia / PSE (Wompi)</p>
+                                <p class="text-xs text-gray-500">Te redirige a tu banco para completar el pago</p>
+                            </div>
+                        </label>
+                    </div>
+
+                    <div *ngIf="paymentMethod === 'WOMPI_PSE'" class="mt-5 border-t border-gray-100 pt-5">
+                        <div *ngIf="wompiLoading" class="text-xs text-gray-500">Cargando Wompi y bancos...</div>
+
+                        <div *ngIf="!wompiLoading" class="space-y-4">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-xs text-gray-500 mb-1 uppercase tracking-wider">Tipo de persona</label>
+                                    <select [(ngModel)]="pseUserType" class="w-full border border-gray-200 px-3 py-2 text-sm rounded bg-white">
+                                        <option value="0">Persona natural</option>
+                                        <option value="1">Persona juridica</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-xs text-gray-500 mb-1 uppercase tracking-wider">Tipo de documento</label>
+                                    <select [(ngModel)]="pseLegalIdType" class="w-full border border-gray-200 px-3 py-2 text-sm rounded bg-white">
+                                        <option value="CC">CC</option>
+                                        <option value="CE">CE</option>
+                                        <option value="NIT">NIT</option>
+                                        <option value="PP">Pasaporte</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-xs text-gray-500 mb-1 uppercase tracking-wider">Numero de documento *</label>
+                                    <input type="text" [(ngModel)]="pseLegalId" class="w-full border border-gray-200 px-3 py-2 text-sm rounded" placeholder="Ej: 1020304050" />
+                                </div>
+                                <div>
+                                    <label class="block text-xs text-gray-500 mb-1 uppercase tracking-wider">Banco *</label>
+                                    <select [(ngModel)]="pseBankCode" class="w-full border border-gray-200 px-3 py-2 text-sm rounded bg-white">
+                                        <option value="">Selecciona un banco</option>
+                                        <option *ngFor="let b of wompiBanks" [value]="b.financial_institution_code">{{ b.financial_institution_name }}</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <label class="flex items-start gap-3 text-xs text-gray-600">
+                                <input type="checkbox" [(ngModel)]="pseAcceptedTerms" class="mt-1" />
+                                <span>
+                                    Acepto los términos y condiciones de Wompi
+                                    <a *ngIf="wompiTermsUrl" [href]="wompiTermsUrl" target="_blank" rel="noopener noreferrer" class="text-gold font-bold hover:text-charcoal">(ver)</a>
+                                </span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right: Order Summary -->
+            <div class="lg:col-span-1">
+                <div class="bg-white border border-gray-100 p-6 sticky top-8">
+                    <h2 class="font-semibold text-charcoal mb-4 text-sm uppercase tracking-widest">Resumen del Pedido
+                    </h2>
+
+                    <!-- Items -->
+                    <div class="space-y-4 mb-6 max-h-64 overflow-y-auto">
+                        <div *ngFor="let item of cartItems" class="flex items-center gap-3">
+                            <img [src]="getItemImage(item)" [alt]="item.product.name"
+                                class="w-14 h-14 object-cover border border-gray-100">
+                            <div class="flex-1 min-w-0">
+                                <p class="text-xs font-medium text-charcoal truncate uppercase tracking-wide">{{
+                                    item.product.name }}</p>
+                                <p class="text-xs text-gray-500">x{{ item.quantity }}</p>
+                            </div>
+                            <p class="text-sm font-bold text-charcoal whitespace-nowrap">
+                                {{ getItemPrice(item) | currency:'COP':'symbol-narrow':'1.0-0' }}
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Totals -->
+                    <div class="border-t border-gray-100 pt-4 space-y-2">
+                        <div class="flex justify-between text-sm text-gray-500">
+                            <span>Subtotal</span>
+                            <span>{{ cartTotal | currency:'COP':'symbol-narrow':'1.0-0' }}</span>
+                        </div>
+                        <div class="flex justify-between text-sm text-gray-500">
+                            <span>Envío</span>
+                            <span class="text-green-600 font-medium">GRATIS</span>
+                        </div>
+                        <div
+                            class="flex justify-between text-base font-bold text-charcoal border-t border-gray-200 pt-2 mt-2">
+                            <span>TOTAL</span>
+                            <span>{{ cartTotal | currency:'COP':'symbol-narrow':'1.0-0' }}</span>
+                        </div>
+                    </div>
+
+                    <!-- CTA Button -->
+                    <button (click)="placeOrder()" [disabled]="isPlacingOrder"
+                        class="w-full mt-6 bg-charcoal text-white py-4 font-bold text-sm tracking-widest uppercase hover:bg-gold transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2">
+                        <svg *ngIf="isPlacingOrder" class="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor">
+                            <circle cx="12" cy="12" r="10" stroke-width="4" class="opacity-25" />
+                            <path d="M4 12a8 8 0 018-8" stroke-width="4" class="opacity-75" />
+                        </svg>
+                        {{ isPlacingOrder ? 'PROCESANDO...' : 'CONFIRMAR PEDIDO' }}
+                    </button>
+
+                    <p class="text-center text-xs text-gray-400 mt-3">🔒 Transacción segura y protegida</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

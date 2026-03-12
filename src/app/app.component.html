@@ -12,7 +12,7 @@
   <app-footer></app-footer>
 
   <!-- WhatsApp Floating Button -->
-  <a href="#"
+  <a *ngIf="whatsappUrl" [href]="whatsappUrl" target="_blank" rel="noopener noreferrer"
     class="fixed bottom-6 right-6 bg-[#25D366] text-white p-4 rounded-full shadow-lg hover:scale-110 hover:shadow-xl transition-all z-50 flex items-center justify-center">
     <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="currentColor" class="bi bi-whatsapp"
       viewBox="0 0 16 16">

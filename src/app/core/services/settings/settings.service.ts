@@ -1,6 +1,8 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { HttpClient } from '@angular/common/http';
+import { BehaviorSubject, Observable, of, throwError } from 'rxjs';
+import { catchError, finalize, tap, shareReplay } from 'rxjs/operators';
+import { API_CONFIG } from '../../config/api-config';
 
 export interface Settings {
     hero_title: string;
@@ -9,28 +11,104 @@ export interface Settings {
     show_banner: boolean;
     banner_text: string;
     hero_image_url?: string;
+
+    logo_url?: string | null;
+    logo_height_mobile?: number | null;
+    logo_height_desktop?: number | null;
+
+    instagram_url?: string | null;
+    instagram_feed_configured?: boolean;
+    facebook_url?: string | null;
+    whatsapp_number?: string | null;
+    whatsapp_message?: string | null;
+
+    email_from_name?: string | null;
+    email_from_address?: string | null;
+    email_reply_to?: string | null;
+    email_bcc_orders?: string | null;
+
+    boutique_title?: string | null;
+    boutique_address_line1?: string | null;
+    boutique_address_line2?: string | null;
+    boutique_phone?: string | null;
+    boutique_email?: string | null;
 }
 
 @Injectable({
     providedIn: 'root'
 })
 export class SettingsService {
-    private apiUrl = 'http://localhost:3000/api/settings';
+    private apiUrl = `${API_CONFIG.baseUrl}/settings`;
+
+    private readonly CACHE_KEY = 'perfumissimo_settings_cache_v1';
+    private settingsSubject = new BehaviorSubject<Settings | null>(null);
+    public settings$ = this.settingsSubject.asObservable();
+    private inflight$?: Observable<Settings>;
 
     constructor(private http: HttpClient) { }
 
-    private getHeaders(): HttpHeaders {
-        const token = localStorage.getItem('auth_token');
-        return new HttpHeaders({
-            'Authorization': `Bearer ${token}`
-        });
+    getSettings(): Observable<Settings> {
+        const cached = this.settingsSubject.value;
+        if (cached) return of(cached);
+
+        const fromStorage = this.loadFromLocal();
+        if (fromStorage) {
+            this.settingsSubject.next(fromStorage);
+            // refrescar en background sin bloquear
+            this.refreshSettings().subscribe({ error: () => {} });
+            return of(fromStorage);
+        }
+
+        return this.refreshSettings();
     }
 
-    getSettings(): Observable<Settings> {
-        return this.http.get<Settings>(this.apiUrl);
+    refreshSettings(): Observable<Settings> {
+        if (this.inflight$) return this.inflight$;
+
+        this.inflight$ = this.http.get<Settings>(this.apiUrl).pipe(
+            tap((s) => {
+                this.settingsSubject.next(s);
+                this.saveToLocal(s);
+            }),
+            finalize(() => {
+                this.inflight$ = undefined;
+            }),
+            catchError((err) => {
+                // si falla, dejar cache (si existe) y propagar error
+                return throwError(() => err);
+            }),
+            shareReplay(1)
+        );
+
+        return this.inflight$;
     }
 
     updateSettings(settings: Settings | FormData): Observable<any> {
-        return this.http.put(this.apiUrl, settings, { headers: this.getHeaders() });
+        return this.http.put(this.apiUrl, settings, { withCredentials: true }).pipe(
+            tap(() => {
+                // refrescar cache despues de guardar
+                this.refreshSettings().subscribe({ error: () => {} });
+            })
+        );
+    }
+
+    private loadFromLocal(): Settings | null {
+        try {
+            const raw = localStorage.getItem(this.CACHE_KEY);
+            if (!raw) return null;
+            const parsed = JSON.parse(raw);
+            if (!parsed || typeof parsed !== 'object') return null;
+            return parsed as Settings;
+        } catch {
+            return null;
+        }
+    }
+
+    private saveToLocal(settings: Settings): void {
+        try {
+            localStorage.setItem(this.CACHE_KEY, JSON.stringify(settings));
+        } catch {
+            // ignore
+        }
     }
 }

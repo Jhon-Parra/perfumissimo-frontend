@@ -39,18 +39,17 @@
                 </svg>
                 <span>Productos & IA</span>
             </a>
-            <a href="#" class="flex items-center space-x-3 p-3 rounded-md hover:bg-gray-800 transition-colors">
+            <a routerLink="/admin/orders" class="flex items-center space-x-3 p-3 rounded-md hover:bg-gray-800 transition-colors">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                         d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path>
                 </svg>
-                <span>Órdenes</span>
+                <span>Pedidos</span>
             </a>
-            <a href="#" class="flex items-center space-x-3 p-3 rounded-md hover:bg-gray-800 transition-colors">
+            <a routerLink="/admin/promotions" class="flex items-center space-x-3 p-3 rounded-md hover:bg-gray-800 transition-colors">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4">
-                    </path>
+                        d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path>
                 </svg>
                 <span>Promociones</span>
             </a>
@@ -65,9 +64,16 @@
                 </svg>
                 <span>Personalizar Página</span>
             </a>
+            <a routerLink="/manual" class="flex items-center space-x-3 p-3 rounded-md hover:bg-gray-800 transition-colors">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M12 6.75c-1.8-1.3-4.5-1.3-6.3 0v12c1.8-1.3 4.5-1.3 6.3 0m0-12c1.8-1.3 4.5-1.3 6.3 0v12c-1.8-1.3-4.5-1.3-6.3 0m0-12v12" />
+                </svg>
+                <span>Manual de uso</span>
+            </a>
         </nav>
         <div class="p-4 border-t border-gray-700">
-            <button
+            <a routerLink="/"
                 class="w-full flex items-center space-x-3 p-3 rounded-md hover:bg-red-900/50 text-red-400 transition-colors">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -75,7 +81,7 @@
                     </path>
                 </svg>
                 <span>Salir / Tienda</span>
-            </button>
+            </a>
         </div>
     </aside>
 
@@ -86,6 +92,7 @@
                 <h1 class="font-serif text-3xl text-charcoal tracking-wide">Usuarios y Accesos</h1>
                 <p class="text-sm text-soft-charcoal mt-1">Supervisa y delega roles a tu equipo</p>
             </div>
+            <app-low-stock-bell></app-low-stock-bell>
         </header>
 
         <!-- Panel de Administración de Roles -->
@@ -100,6 +107,7 @@
                             <th class="p-4">Usuario</th>
                             <th class="p-4">Email / Teléfono</th>
                             <th class="p-4">Rol Asignado</th>
+                            <th class="p-4">Segmento</th>
                             <th class="p-4 text-center">Fecha Registro</th>
                         </tr>
                     </thead>
@@ -117,6 +125,12 @@
                                     <option *ngFor="let rol of availableRoles" [value]="rol.value">{{ rol.label }}
                                     </option>
                                 </select>
+                            </td>
+                            <td class="p-4">
+                                <input type="text" [value]="user.segmento || ''" #segmentInput
+                                    (change)="changeUserSegment(user, segmentInput.value)"
+                                    class="border border-[#dcdcd4] rounded-sm p-2 text-xs w-full max-w-[220px] focus:outline-none focus:border-gold"
+                                    placeholder="Ej: VIP">
                             </td>
                             <td class="p-4 text-center text-xs">{{ user.creado_en | date:'dd/MM/yyyy' }}</td>
                         </tr>
