@@ -42,6 +42,14 @@ export class SettingsComponent implements OnInit {
     email_reply_to: '',
     email_bcc_orders: '',
 
+    smtp_host: '',
+    smtp_port: 465,
+    smtp_secure: true,
+    smtp_user: '',
+    smtp_from: '',
+    smtp_pass: '',
+    smtp_configured: false,
+
     boutique_title: 'Nuestra Boutique',
     boutique_address_line1: 'Calle 12 #13-85',
     boutique_address_line2: 'Bogotá, Colombia',
@@ -246,6 +254,15 @@ export class SettingsComponent implements OnInit {
     formData.append('email_reply_to', this.settings.email_reply_to || '');
     formData.append('email_bcc_orders', this.settings.email_bcc_orders || '');
 
+    formData.append('smtp_host', String(this.settings.smtp_host || ''));
+    formData.append('smtp_port', String(this.settings.smtp_port ?? ''));
+    formData.append('smtp_secure', this.settings.smtp_secure ? 'true' : 'false');
+    formData.append('smtp_user', String(this.settings.smtp_user || ''));
+    formData.append('smtp_from', String(this.settings.smtp_from || ''));
+    if (this.settings.smtp_pass && String(this.settings.smtp_pass).trim()) {
+      formData.append('smtp_pass', String(this.settings.smtp_pass).trim());
+    }
+
     formData.append('boutique_title', this.settings.boutique_title || '');
     formData.append('boutique_address_line1', this.settings.boutique_address_line1 || '');
     formData.append('boutique_address_line2', this.settings.boutique_address_line2 || '');
@@ -297,6 +314,7 @@ export class SettingsComponent implements OnInit {
         this.instagramTokenInput = '';
         this.selectedEnvioPrioritarioImageFile = null;
         this.selectedPerfumeLujoImageFile = null;
+        this.settings.smtp_pass = '';
         alert('Configuración actualizada exitosamente');
       },
       error: (err) => {
@@ -331,6 +349,14 @@ export class SettingsComponent implements OnInit {
         email_from_address: '',
         email_reply_to: '',
         email_bcc_orders: '',
+
+        smtp_host: '',
+        smtp_port: 465,
+        smtp_secure: true,
+        smtp_user: '',
+        smtp_from: '',
+        smtp_pass: '',
+        smtp_configured: false,
 
         boutique_title: 'Nuestra Boutique',
         boutique_address_line1: 'Calle 12 #13-85',

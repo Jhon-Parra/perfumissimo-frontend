@@ -36,6 +36,14 @@ export interface Settings {
     email_reply_to?: string | null;
     email_bcc_orders?: string | null;
 
+    smtp_host?: string | null;
+    smtp_port?: number | null;
+    smtp_secure?: boolean | null;
+    smtp_user?: string | null;
+    smtp_from?: string | null;
+    smtp_pass?: string | null;
+    smtp_configured?: boolean;
+
     boutique_title?: string | null;
     boutique_address_line1?: string | null;
     boutique_address_line2?: string | null;

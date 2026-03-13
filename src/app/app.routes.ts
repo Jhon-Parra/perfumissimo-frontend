@@ -80,6 +80,12 @@ export const routes: Routes = [
         data: { permission: 'admin.settings' }
     },
     {
+        path: 'admin/emails',
+        loadComponent: () => import('./pages/admin/emails/emails.component').then(m => m.EmailsComponent),
+        canActivate: [authGuard, roleGuard],
+        data: { permission: 'admin.settings' }
+    },
+    {
         path: 'admin/promotions',
         loadComponent: () => import('./pages/admin/promotions/promotions.component').then(m => m.PromotionsComponent),
         canActivate: [authGuard, roleGuard],

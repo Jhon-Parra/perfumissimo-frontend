@@ -1,5 +1,5 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
-import { RouterLink, Router, NavigationEnd } from '@angular/router';
+import { RouterLink, Router, NavigationEnd, RouterLinkActive } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { CartService } from '../../../core/services/cart/cart.service';
@@ -13,7 +13,7 @@ import { API_CONFIG } from '../../../core/config/api-config';
 @Component({
   selector: 'app-navbar',
   standalone: true,
-  imports: [RouterLink, CommonModule, FormsModule, LowStockBellComponent],
+  imports: [RouterLink, RouterLinkActive, CommonModule, FormsModule, LowStockBellComponent],
   templateUrl: './navbar.component.html',
   styleUrls: ['./navbar.component.css']
 })

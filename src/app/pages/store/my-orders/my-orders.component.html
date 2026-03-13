@@ -104,6 +104,35 @@
             </div>
         </div>
 
+        <!-- Review Prompt Modal -->
+        <div *ngIf="reviewPromptOpen" class="fixed inset-0 z-40 flex items-center justify-center px-4">
+            <div class="absolute inset-0 bg-black/40" (click)="closeReviewPrompt()"></div>
+            <div class="relative w-full max-w-md bg-white border border-gray-100 shadow-xl p-6">
+                <div class="flex items-start justify-between gap-4">
+                    <div>
+                        <p class="text-xs text-gray-400 uppercase tracking-wider">Pedido entregado</p>
+                        <h3 class="font-serif text-xl text-charcoal mt-1">¿Quieres dejar una reseña?</h3>
+                    </div>
+                    <button type="button" (click)="closeReviewPrompt()" class="text-gray-400 hover:text-charcoal">✕</button>
+                </div>
+
+                <p class="text-sm text-soft-charcoal mt-4">
+                    Tu opinion sobre <strong>{{ reviewPromptProductName }}</strong> ayuda a otros clientes a elegir.
+                </p>
+
+                <div class="mt-6 flex justify-end gap-3">
+                    <button type="button" (click)="closeReviewPrompt()"
+                        class="px-5 py-2 text-xs font-bold uppercase tracking-widest text-soft-charcoal hover:bg-gray-50 border border-[#ecece5]">
+                        Mas tarde
+                    </button>
+                    <button type="button" (click)="acceptReviewPrompt()"
+                        class="px-6 py-2 text-xs font-bold uppercase tracking-widest bg-charcoal text-white hover:bg-gold transition-colors">
+                        Calificar ahora
+                    </button>
+                </div>
+            </div>
+        </div>
+
         <!-- Review Modal -->
         <div *ngIf="reviewOpen" class="fixed inset-0 z-50 flex items-center justify-center px-4">
             <div class="absolute inset-0 bg-black/40" (click)="closeReview()"></div>

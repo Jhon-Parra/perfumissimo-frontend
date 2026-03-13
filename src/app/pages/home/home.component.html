@@ -4,7 +4,7 @@
         <!-- Background Media -->
         <video *ngIf="getHeroMediaType() === 'video'" #heroVideo data-hero-video="1" [src]="getHeroMediaUrl()"
             [attr.poster]="getHeroPosterUrl() || null" autoplay playsinline preload="metadata" [muted]="heroVideoMuted"
-            [loop]="heroVideoLoop" class="absolute inset-0 w-full h-full object-cover object-[center_30%]">
+            [loop]="heroVideoLoop" class="absolute inset-0 w-full h-full object-cover object-center">
         </video>
 
         <div *ngIf="getHeroMediaType() === 'video' && heroVideoMode === 'first' && heroVideoNeedsUserGesture"
@@ -21,8 +21,7 @@
         </div>
 
         <img *ngIf="getHeroMediaType() !== 'video'" [src]="getHeroMediaUrl()" alt="Hero Banner" loading="eager"
-            decoding="async" fetchpriority="high"
-            class="absolute inset-0 w-full h-full object-cover object-[center_30%]" />
+            decoding="async" fetchpriority="high" class="absolute inset-0 w-full h-full object-cover object-center" />
 
         <!-- Overlay gradiente muy suave para legibilidad del texto -->
         <div class="absolute inset-0 bg-gradient-to-r from-[#F9F9F6]/90 via-[#F9F9F6]/50 to-transparent"></div>

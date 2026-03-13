@@ -62,6 +62,14 @@
                 </svg>
                 <span>Pagos</span>
             </a>
+            <a routerLink="/admin/emails"
+                class="flex items-center space-x-3 p-3 rounded-md hover:bg-gray-800 transition-colors">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M3 8l9 6 9-6M4 6h16a2 2 0 012 2v8a2 2 0 01-2 2H4a2 2 0 01-2-2V8a2 2 0 012-2z"></path>
+                </svg>
+                <span>Correos</span>
+            </a>
             <!-- Link a Configuración Activo -->
             <a routerLink="/admin/settings"
                 class="flex items-center space-x-3 p-3 rounded-md bg-gray-800 text-gold transition-colors">
@@ -116,6 +124,7 @@
                     <a routerLink="/admin/orders" class="px-3 py-2 text-[11px] uppercase tracking-widest font-bold border border-[#dcdcd4] bg-white rounded-md">Pedidos</a>
                     <a routerLink="/admin/promotions" class="px-3 py-2 text-[11px] uppercase tracking-widest font-bold border border-[#dcdcd4] bg-white rounded-md">Promos</a>
                     <a routerLink="/admin/payments" class="px-3 py-2 text-[11px] uppercase tracking-widest font-bold border border-[#dcdcd4] bg-white rounded-md">Pagos</a>
+                    <a routerLink="/admin/emails" class="px-3 py-2 text-[11px] uppercase tracking-widest font-bold border border-[#dcdcd4] bg-white rounded-md">Correos</a>
                     <a routerLink="/admin/settings" class="px-3 py-2 text-[11px] uppercase tracking-widest font-bold border border-[#dcdcd4] bg-white rounded-md">Apariencia</a>
                 </div>
             </div>
@@ -428,7 +437,12 @@
 
             <!-- Email Settings -->
             <div class="bg-white rounded-xl shadow-sm border border-[#ecece5] p-6">
-                <h3 class="font-serif text-xl border-b border-[#ecece5] pb-4 mb-6">Correo (Remitente)</h3>
+                <div class="flex items-center justify-between border-b border-[#ecece5] pb-4 mb-6">
+                    <h3 class="font-serif text-xl">Correo (Remitente)</h3>
+                    <span class="text-xs text-soft-charcoal">
+                        SMTP: <strong>{{ settings.smtp_configured ? 'Configurado' : 'Pendiente' }}</strong>
+                    </span>
+                </div>
 
                 <div class="space-y-6">
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -459,8 +473,52 @@
 
                     <div class="p-4 bg-cream border border-[#ecece5] rounded-md text-sm text-soft-charcoal">
                         Estos campos definen el <strong>remitente</strong> del correo.
-                        Las credenciales SMTP se configuran en el backend (no se guardan aqui).
                     </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-xl shadow-sm border border-[#ecece5] p-6">
+                <h3 class="font-serif text-xl border-b border-[#ecece5] pb-4 mb-6">Credenciales SMTP</h3>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-bold text-soft-charcoal tracking-widest uppercase mb-2">SMTP Host</label>
+                        <input type="text" [(ngModel)]="settings.smtp_host" placeholder="smtp.gmail.com"
+                            class="w-full border border-[#ecece5] rounded-md px-4 py-2 text-sm focus:ring-gold focus:border-gold outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-bold text-soft-charcoal tracking-widest uppercase mb-2">SMTP Port</label>
+                        <input type="number" min="1" [(ngModel)]="settings.smtp_port" placeholder="465"
+                            class="w-full border border-[#ecece5] rounded-md px-4 py-2 text-sm focus:ring-gold focus:border-gold outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-bold text-soft-charcoal tracking-widest uppercase mb-2">SMTP Secure</label>
+                        <div class="flex items-center gap-3">
+                            <input type="checkbox" [(ngModel)]="settings.smtp_secure"
+                                class="h-4 w-4 text-gold border-[#dcdcd4] rounded">
+                            <span class="text-sm text-soft-charcoal">Usar conexion segura (SSL/TLS)</span>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-bold text-soft-charcoal tracking-widest uppercase mb-2">SMTP User</label>
+                        <input type="text" [(ngModel)]="settings.smtp_user" placeholder="tu_correo@gmail.com"
+                            class="w-full border border-[#ecece5] rounded-md px-4 py-2 text-sm focus:ring-gold focus:border-gold outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-bold text-soft-charcoal tracking-widest uppercase mb-2">SMTP Pass</label>
+                        <input type="password" [(ngModel)]="settings.smtp_pass" placeholder="tu_contrasena_de_aplicacion"
+                            class="w-full border border-[#ecece5] rounded-md px-4 py-2 text-sm focus:ring-gold focus:border-gold outline-none">
+                        <p class="text-xs text-gray-500 mt-2">Se guarda cifrada. Deja vacio si no quieres cambiarla.</p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-bold text-soft-charcoal tracking-widest uppercase mb-2">SMTP From</label>
+                        <input type="text" [(ngModel)]="settings.smtp_from" placeholder='"Tu Nombre <tu_correo@gmail.com>"'
+                            class="w-full border border-[#ecece5] rounded-md px-4 py-2 text-sm focus:ring-gold focus:border-gold outline-none">
+                    </div>
+                </div>
+
+                <div class="p-4 bg-cream border border-[#ecece5] rounded-md text-sm text-soft-charcoal mt-6">
+                    Usa una <strong>contrasena de aplicacion</strong> del proveedor de correo. Para Gmail: SMTP_HOST=smtp.gmail.com, SMTP_PORT=465, SMTP_SECURE=true.
                 </div>
             </div>
 

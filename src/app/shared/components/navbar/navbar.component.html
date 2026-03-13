@@ -29,15 +29,15 @@
 
       <!-- Center Links (Desktop) -->
       <div *ngIf="!isAdminRoute" class="hidden md:flex space-x-8 items-center pt-1">
-        <a routerLink="/"
-          class="text-cream/90 hover:text-white transition-colors duration-200 text-sm font-medium tracking-widest border-b-2 border-white pb-1">INICIO</a>
-        <a routerLink="/catalog"
+        <a routerLink="/" routerLinkActive="text-white border-white" [routerLinkActiveOptions]="{exact: true}"
+          class="text-cream/80 hover:text-white transition-colors duration-200 text-sm font-medium tracking-widest border-b-2 border-transparent pb-1">INICIO</a>
+        <a routerLink="/catalog" routerLinkActive="text-white border-gold"
           class="text-cream/80 hover:text-white transition-colors duration-200 text-sm font-medium tracking-widest border-b-2 border-transparent pb-1 hover:border-gold">CATÁLOGO</a>
-        <a routerLink="/promotions"
+        <a routerLink="/promotions" routerLinkActive="text-white border-gold"
           class="text-cream/80 hover:text-white transition-colors duration-200 text-sm font-medium tracking-widest border-b-2 border-transparent pb-1 hover:border-gold">PROMOCIONES</a>
-        <a routerLink="/contact"
+        <a routerLink="/contact" routerLinkActive="text-white border-gold"
           class="text-cream/80 hover:text-white transition-colors duration-200 text-sm font-medium tracking-widest border-b-2 border-transparent pb-1 hover:border-gold">CONTACTO</a>
-        <a *ngIf="authService.isAuthenticated()" routerLink="/my-orders"
+        <a *ngIf="authService.isAuthenticated()" routerLink="/my-orders" routerLinkActive="text-white border-gold"
           class="text-cream/80 hover:text-white transition-colors duration-200 text-sm font-medium tracking-widest border-b-2 border-transparent pb-1 hover:border-gold">PEDIDOS</a>
       </div>
 
@@ -123,8 +123,9 @@
 
         <!-- Guest View -->
         <ng-template #loggedOut>
-          <a routerLink="/login" class="text-charcoal hover:text-gold transition-colors"
-            [ngClass]="!isAdminRoute ? 'hidden md:block' : ''">
+          <a routerLink="/login"
+            class="flex items-center justify-center w-9 h-9 rounded-full border border-white/10 bg-white/5 text-gold hover:bg-gold hover:text-white transition-all duration-300 group"
+            [ngClass]="!isAdminRoute ? 'hidden md:flex' : 'flex'">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
               <path stroke-linecap="round" stroke-linejoin="round"
                 d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z">

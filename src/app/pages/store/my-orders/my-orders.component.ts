@@ -31,6 +31,13 @@ export class MyOrdersComponent implements OnInit {
     reviewSaving = false;
     reviewError = '';
 
+    reviewPromptOpen = false;
+    reviewPromptOrderId = '';
+    reviewPromptProductId = '';
+    reviewPromptProductName = '';
+    private reviewPromptShown = false;
+    private promptedProductIds = new Set<string>();
+
     constructor(
         public orderService: OrderService,
         private authService: AuthService,
@@ -39,7 +46,34 @@ export class MyOrdersComponent implements OnInit {
     ) { }
 
     ngOnInit(): void {
+        this.loadPromptedProducts();
         this.loadOrders();
+    }
+
+    private getPromptStorageKey(): string {
+        const userId = this.authService.getUserId() || 'guest';
+        return `perfumissimo_review_prompted_v1_${userId}`;
+    }
+
+    private loadPromptedProducts(): void {
+        try {
+            const raw = localStorage.getItem(this.getPromptStorageKey());
+            if (!raw) return;
+            const parsed = JSON.parse(raw);
+            if (Array.isArray(parsed)) {
+                this.promptedProductIds = new Set(parsed.map(String));
+            }
+        } catch {
+            this.promptedProductIds = new Set();
+        }
+    }
+
+    private savePromptedProducts(): void {
+        try {
+            localStorage.setItem(this.getPromptStorageKey(), JSON.stringify(Array.from(this.promptedProductIds)));
+        } catch {
+            // ignore
+        }
     }
 
     private loadOrders(): void {
@@ -79,13 +113,66 @@ export class MyOrdersComponent implements OnInit {
             next: (reviews) => {
                 this.myReviews = reviews || [];
                 this.reviewedProductIds = new Set((reviews || []).map(r => r.producto_id));
+                this.maybeShowReviewPrompt();
             },
             error: (err) => {
                 console.error('Error cargando reseñas:', err);
                 this.myReviews = [];
                 this.reviewedProductIds = new Set();
+                this.maybeShowReviewPrompt();
             }
         });
+    }
+
+    private maybeShowReviewPrompt(): void {
+        if (this.reviewPromptShown || this.reviewOpen || this.reviewPromptOpen) return;
+
+        const target = this.findFirstReviewTarget();
+        if (!target) return;
+
+        this.reviewPromptShown = true;
+        this.reviewPromptOrderId = target.orderId;
+        this.reviewPromptProductId = target.productId;
+        this.reviewPromptProductName = target.productName;
+        this.promptedProductIds.add(target.productId);
+        this.savePromptedProducts();
+        this.reviewPromptOpen = true;
+    }
+
+    private findFirstReviewTarget(): { orderId: string; productId: string; productName: string } | null {
+        for (const order of this.orders || []) {
+            if (!order || order.estado !== 'ENTREGADO') continue;
+            const items = Array.isArray(order.items) ? order.items : [];
+            for (const item of items) {
+                if (!item?.producto_id) continue;
+                if (this.reviewedProductIds.has(item.producto_id)) continue;
+                if (this.promptedProductIds.has(item.producto_id)) continue;
+                {
+                    return {
+                        orderId: order.id,
+                        productId: item.producto_id,
+                        productName: item.nombre || 'Producto'
+                    };
+                }
+            }
+        }
+        return null;
+    }
+
+    closeReviewPrompt(): void {
+        this.reviewPromptOpen = false;
+    }
+
+    acceptReviewPrompt(): void {
+        if (!this.reviewPromptOrderId || !this.reviewPromptProductId) {
+            this.closeReviewPrompt();
+            return;
+        }
+        const orderId = this.reviewPromptOrderId;
+        const productId = this.reviewPromptProductId;
+        const productName = this.reviewPromptProductName;
+        this.closeReviewPrompt();
+        this.openReview(orderId, productId, productName);
     }
 
     canReview(order: Order, productId: string): boolean {
