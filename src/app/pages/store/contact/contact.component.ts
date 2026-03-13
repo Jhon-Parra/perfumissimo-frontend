@@ -14,6 +14,7 @@ export class ContactComponent {
   instagramUrl = '';
   facebookUrl = '';
   whatsappUrl = '';
+  tiktokUrl = '';
 
   mapEmbedUrl: SafeResourceUrl | null = null;
 
@@ -26,6 +27,7 @@ export class ContactComponent {
         this.instagramUrl = this.normalizeExternalUrl(s?.instagram_url || '', 'instagram.com');
         this.facebookUrl = this.normalizeExternalUrl(s?.facebook_url || '', 'facebook.com');
         this.whatsappUrl = this.buildWhatsappUrl(s?.whatsapp_number || '', s?.whatsapp_message || '');
+        this.tiktokUrl = this.normalizeExternalUrl(s?.tiktok_url || '', 'tiktok.com');
 
         const line1 = (s as any)?.boutique_address_line1 || 'Calle 12 #13-85';
         const line2 = (s as any)?.boutique_address_line2 || 'Bogotá, Colombia';
@@ -37,6 +39,7 @@ export class ContactComponent {
         this.instagramUrl = '';
         this.facebookUrl = '';
         this.whatsappUrl = '';
+        this.tiktokUrl = '';
         const url = this.buildGoogleMapsEmbedUrl('Calle 12 #13-85, Bogotá, Colombia');
         this.mapEmbedUrl = this.sanitizer.bypassSecurityTrustResourceUrl(url);
       }

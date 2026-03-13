@@ -9,7 +9,7 @@ module.exports = {
         // Paleta Premium Perfumissimo
         cream: '#F9F9F6',
         sage: '#9CA389',
-        gold: '#C2A878',
+        gold: '#D4AF37', // Dorado más vibrante y premium
         charcoal: '#333333',
         'soft-charcoal': '#4A4A4A',
         'primary-green': '#2D4C3B',

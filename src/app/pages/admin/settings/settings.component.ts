@@ -32,6 +32,7 @@ export class SettingsComponent implements OnInit {
 
     instagram_url: '',
     facebook_url: '',
+    tiktok_url: '',
     whatsapp_number: '',
     whatsapp_message: ''
     ,
@@ -243,6 +244,7 @@ export class SettingsComponent implements OnInit {
 
     formData.append('instagram_url', this.settings.instagram_url || '');
     formData.append('facebook_url', this.settings.facebook_url || '');
+    formData.append('tiktok_url', this.settings.tiktok_url || '');
     formData.append('whatsapp_number', this.settings.whatsapp_number || '');
     formData.append('whatsapp_message', this.settings.whatsapp_message || '');
 
@@ -343,6 +345,7 @@ export class SettingsComponent implements OnInit {
         logo_height_desktop: 112,
         instagram_url: '',
         facebook_url: '',
+        tiktok_url: '',
         whatsapp_number: '',
         whatsapp_message: '',
         email_from_name: '',

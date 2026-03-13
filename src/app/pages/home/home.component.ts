@@ -50,6 +50,7 @@ export class HomeComponent implements OnInit {
 
   facebookUrl = '';
   whatsappUrl = '';
+  tiktokUrl = '';
 
   recoQuery = '';
 
@@ -81,15 +82,13 @@ export class HomeComponent implements OnInit {
     });
 
     // Cargar configuraciones globales (Textos y Colores)
-    this.settingsService.getSettings().subscribe({
+    this.settingsService.settings$.subscribe({
       next: (data) => {
-        this.settings = data;
-        this.instagramUrl = this.normalizeInstagramUrl(this.settings?.instagram_url || '');
-        this.instagramLabel = this.buildInstagramLabel(this.instagramUrl, this.settings?.instagram_url || '');
-
-        this.facebookUrl = this.normalizeExternalUrl(this.settings?.facebook_url || '', 'facebook.com');
-        this.whatsappUrl = this.buildWhatsappUrl(this.settings?.whatsapp_number || '', this.settings?.whatsapp_message || '');
-      },
+        if (data) this.applySettings(data);
+      }
+    });
+    this.settingsService.getSettings().subscribe({
+      next: (data) => this.applySettings(data),
       error: (err) => console.error('Error cargando configuración', err)
     });
     this.productService.getNewestProducts(8).subscribe({
@@ -164,6 +163,16 @@ export class HomeComponent implements OnInit {
         this.instagramLoading = false;
       }
     });
+  }
+
+  private applySettings(data: Settings): void {
+    this.settings = data;
+    this.instagramUrl = this.normalizeInstagramUrl(this.settings?.instagram_url || '');
+    this.instagramLabel = this.buildInstagramLabel(this.instagramUrl, this.settings?.instagram_url || '');
+
+    this.facebookUrl = this.normalizeExternalUrl(this.settings?.facebook_url || '', 'facebook.com');
+    this.whatsappUrl = this.buildWhatsappUrl(this.settings?.whatsapp_number || '', this.settings?.whatsapp_message || '');
+    this.tiktokUrl = this.normalizeExternalUrl(this.settings?.tiktok_url || '', 'tiktok.com');
   }
 
   private configureHeroVideo(video: HTMLVideoElement): void {

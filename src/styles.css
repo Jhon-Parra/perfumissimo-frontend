@@ -42,6 +42,45 @@
 
   /* Tarjetas de Producto */
   .product-card {
-    @apply bg-white rounded-2xl shadow-sm hover:shadow-md transition-shadow duration-300 overflow-hidden flex flex-col;
+    @apply bg-white rounded-2xl shadow-sm hover:shadow-md transition-all duration-500 overflow-hidden flex flex-col hover:-translate-y-2;
+  }
+
+  /* Botón con Incitación al Clic */
+  .btn-inciting {
+    @apply relative overflow-hidden transition-all duration-500 shadow-md hover:-translate-y-1.5 active:translate-y-0 active:shadow-md;
+    animation: soft-pulse 3s infinite ease-in-out;
+  }
+
+  .btn-inciting:hover {
+    box-shadow: 0 15px 30px -5px rgba(212, 175, 55, 0.6);
+  }
+
+  .btn-inciting::after {
+    content: '';
+    @apply absolute top-0 -left-[100%] w-[50%] h-full bg-gradient-to-r from-transparent via-white/30 to-transparent skew-x-[-25deg];
+    animation: shine-sweep 4s infinite linear;
+  }
+}
+
+@keyframes soft-pulse {
+
+  0%,
+  100% {
+    transform: scale(1);
+  }
+
+  50% {
+    transform: scale(1.03);
+  }
+}
+
+@keyframes shine-sweep {
+  0% {
+    left: -100%;
+  }
+
+  20%,
+  100% {
+    left: 150%;
   }
 }

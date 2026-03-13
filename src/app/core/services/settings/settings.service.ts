@@ -22,6 +22,7 @@ export interface Settings {
     instagram_url?: string | null;
     instagram_feed_configured?: boolean;
     facebook_url?: string | null;
+    tiktok_url?: string | null;
     whatsapp_number?: string | null;
     whatsapp_message?: string | null;
 

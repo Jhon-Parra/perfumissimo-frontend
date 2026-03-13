@@ -15,6 +15,7 @@ export class FooterComponent {
   whatsappUrl = '';
   instagramUrl = '';
   facebookUrl = '';
+  tiktokUrl = '';
 
   constructor(private settingsService: SettingsService) {}
 
@@ -25,12 +26,14 @@ export class FooterComponent {
         this.whatsappUrl = this.buildWhatsappUrl(s?.whatsapp_number || '', s?.whatsapp_message || '');
         this.instagramUrl = this.normalizeExternalUrl(s?.instagram_url || '', 'instagram.com');
         this.facebookUrl = this.normalizeExternalUrl(s?.facebook_url || '', 'facebook.com');
+        this.tiktokUrl = this.normalizeExternalUrl(s?.tiktok_url || '', 'tiktok.com');
       },
       error: () => {
         this.settings = null;
         this.whatsappUrl = '';
         this.instagramUrl = '';
         this.facebookUrl = '';
+        this.tiktokUrl = '';
       }
     });
   }
