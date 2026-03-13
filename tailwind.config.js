@@ -12,6 +12,8 @@ module.exports = {
         gold: '#C2A878',
         charcoal: '#333333',
         'soft-charcoal': '#4A4A4A',
+        'primary-green': '#2D4C3B',
+        'dark-green': '#1B3326',
       },
       fontFamily: {
         serif: ['"Playfair Display"', 'serif'],

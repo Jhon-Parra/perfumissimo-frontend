@@ -5,6 +5,7 @@ import { RouterModule } from '@angular/router';
 import { PromotionService, Promotion } from '../../../core/services/promotion/promotion.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { ProductService, Product as ApiProduct } from '../../../core/services/product/product.service';
+import { CategoryService, Category } from '../../../core/services/category/category.service';
 import { LowStockBellComponent } from '../../../shared/components/low-stock-bell/low-stock-bell.component';
 
 type PromotionForm = {
@@ -19,7 +20,8 @@ type PromotionForm = {
   activo: boolean;
 
   product_scope: 'GLOBAL' | 'SPECIFIC' | 'GENDER';
-  product_gender: '' | 'mujer' | 'hombre' | 'unisex';
+  // Cuando product_scope = 'GENDER', guarda el slug de categoria
+  product_gender: string;
   product_ids: string[];
 
   audience_scope: 'ALL' | 'SEGMENT' | 'CUSTOMERS';
@@ -42,6 +44,9 @@ export class PromotionsComponent implements OnInit {
   allProducts: ApiProduct[] = [];
   productSearch = '';
   userIdsText = '';
+
+  categories: Category[] = [];
+  categoriesSupported = false;
 
   imageFile: File | null = null;
   imagePreviewUrl: string | null = null;
@@ -73,7 +78,8 @@ export class PromotionsComponent implements OnInit {
   constructor(
     private promotionService: PromotionService,
     private authService: AuthService,
-    private productService: ProductService
+    private productService: ProductService,
+    private categoryService: CategoryService
   ) {}
 
   ngOnInit(): void {
@@ -109,6 +115,18 @@ export class PromotionsComponent implements OnInit {
       },
       error: (err) => {
         console.error('Error cargando productos:', err);
+      }
+    });
+
+    // Categorias para selector (cuando alcance es por categoria)
+    this.categoryService.getAdminCategories().subscribe({
+      next: (rows) => {
+        this.categories = (rows || []).slice().sort((a, b) => String(a?.nombre || '').localeCompare(String(b?.nombre || ''), 'es'));
+        this.categoriesSupported = this.categories.length > 0;
+      },
+      error: () => {
+        this.categories = [];
+        this.categoriesSupported = false;
       }
     });
   }
@@ -161,7 +179,7 @@ export class PromotionsComponent implements OnInit {
       activo: !!promo.activo,
 
       product_scope: (promo.product_scope || 'GLOBAL') as any,
-      product_gender: (promo.product_gender as any) || '',
+      product_gender: String((promo as any).product_gender || ''),
       product_ids: productIds,
 
       audience_scope: (promo.audience_scope || 'ALL') as any,
@@ -235,7 +253,7 @@ export class PromotionsComponent implements OnInit {
     }
 
     if (this.form.product_scope === 'GENDER' && !this.form.product_gender) {
-      this.error = 'Debes seleccionar un genero.';
+      this.error = 'Debes seleccionar una categoria.';
       return;
     }
 

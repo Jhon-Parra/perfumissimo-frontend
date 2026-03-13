@@ -50,26 +50,127 @@
                     </div>
                 </div>
 
+                <!-- Extras (opcional) -->
+                <div class="checkout-extras bg-gradient-to-br from-white via-white to-cream border border-[#ecece5] p-6 mb-6 rounded-2xl shadow-sm">
+                    <div class="flex items-start justify-between gap-4 mb-5">
+                        <div>
+                            <h2 class="font-semibold text-charcoal text-sm uppercase tracking-widest">Extras opcionales</h2>
+                            <p class="text-xs text-gray-500 mt-1">Personaliza tu compra con detalles premium.</p>
+                        </div>
+                        <div class="hidden sm:flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-sage">
+                            <span class="w-2 h-2 rounded-full bg-primary-green"></span>
+                            <span>Mejor experiencia</span>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <label class="group relative p-5 rounded-2xl border cursor-pointer transition-all"
+                            [ngClass]="envioPrioritario ? 'border-gold bg-gold/5 shadow-sm' : 'border-[#ecece5] bg-white hover:shadow-sm'">
+                            <div class="flex items-start gap-4">
+                                <input type="checkbox" [(ngModel)]="envioPrioritario" (change)="onToggleExtras()" class="mt-1 accent-gold" />
+
+                                <div class="flex gap-4 flex-1 min-w-0">
+                                    <div class="relative">
+                                        <img [src]="priorityShippingImg" alt="Envio prioritario"
+                                            class="w-16 h-16 rounded-2xl object-cover ring-1 ring-black/5 shadow-sm" />
+                                        <span class="absolute -bottom-2 left-2 px-2 py-0.5 rounded-full text-[9px] font-bold tracking-widest uppercase bg-primary-green text-white">
+                                            Recomendado
+                                        </span>
+                                    </div>
+
+                                    <div class="min-w-0 flex-1">
+                                        <div class="flex items-start justify-between gap-3">
+                                            <div class="min-w-0">
+                                                <div class="text-sm font-bold text-charcoal">Envio prioritario</div>
+                                                <div class="text-xs text-gray-500 mt-1 leading-relaxed">
+                                                    Prioridad en alistamiento y despacho. Ideal si lo necesitas rapido.
+                                                </div>
+                                            </div>
+
+                                            <div class="flex flex-col items-end gap-1 flex-shrink-0">
+                                                <span class="inline-flex items-center px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest border"
+                                                    [ngClass]="envioPrioritarioPrecio > 0 ? 'bg-dark-green text-white border-dark-green' : 'bg-green-50 text-green-700 border-green-100'">
+                                                    +{{ envioPrioritarioPrecio > 0 ? (envioPrioritarioPrecio | currency:'COP':'symbol-narrow':'1.0-0') : '0' }}
+                                                </span>
+                                                <span class="text-[10px] text-gray-400 uppercase tracking-widest">Adicional</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="absolute inset-0 rounded-2xl pointer-events-none ring-1 ring-transparent group-hover:ring-gold/25 transition"></div>
+                        </label>
+
+                        <label class="group relative p-5 rounded-2xl border cursor-pointer transition-all"
+                            [ngClass]="perfumeLujo ? 'border-gold bg-gold/5 shadow-sm' : 'border-[#ecece5] bg-white hover:shadow-sm'">
+                            <div class="flex items-start gap-4">
+                                <input type="checkbox" [(ngModel)]="perfumeLujo" (change)="onToggleExtras()" class="mt-1 accent-gold" />
+
+                                <div class="flex gap-4 flex-1 min-w-0">
+                                    <div class="relative">
+                                        <img [src]="luxuryPerfumeImg" alt="Perfume de lujo"
+                                            class="w-16 h-16 rounded-2xl object-cover ring-1 ring-black/5 shadow-sm" />
+                                        <span class="absolute -bottom-2 left-2 px-2 py-0.5 rounded-full text-[9px] font-bold tracking-widest uppercase bg-gold text-white">
+                                            Premium
+                                        </span>
+                                    </div>
+
+                                    <div class="min-w-0 flex-1">
+                                        <div class="flex items-start justify-between gap-3">
+                                            <div class="min-w-0">
+                                                <div class="text-sm font-bold text-charcoal">Perfume de lujo</div>
+                                                <div class="text-xs text-gray-500 mt-1 leading-relaxed">
+                                                    Presentacion premium para regalo (empaque especial y detalle).
+                                                </div>
+                                            </div>
+
+                                            <div class="flex flex-col items-end gap-1 flex-shrink-0">
+                                                <span class="inline-flex items-center px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest border"
+                                                    [ngClass]="perfumeLujoPrecio > 0 ? 'bg-dark-green text-white border-dark-green' : 'bg-green-50 text-green-700 border-green-100'">
+                                                    +{{ perfumeLujoPrecio > 0 ? (perfumeLujoPrecio | currency:'COP':'symbol-narrow':'1.0-0') : '0' }}
+                                                </span>
+                                                <span class="text-[10px] text-gray-400 uppercase tracking-widest">Adicional</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="absolute inset-0 rounded-2xl pointer-events-none ring-1 ring-transparent group-hover:ring-gold/25 transition"></div>
+                        </label>
+                    </div>
+                </div>
+
                 <!-- Payment Method -->
                 <div class="bg-white border border-gray-100 p-6">
                     <h2 class="font-semibold text-charcoal mb-4 text-sm uppercase tracking-widest">Método de Pago</h2>
 
                     <div class="space-y-3">
                         <label class="flex items-start gap-3 p-4 border rounded cursor-pointer"
-                            [ngClass]="paymentMethod === 'COD' ? 'border-gold bg-gold/5' : 'border-gray-200 bg-white'">
-                            <input type="radio" name="paymentMethod" value="COD" [(ngModel)]="paymentMethod" (change)="onPaymentMethodChange()" class="mt-1" />
-                            <div>
-                                <p class="text-sm font-medium text-charcoal">Pago contra entrega</p>
-                                <p class="text-xs text-gray-500">Paga cuando recibas tu pedido</p>
-                            </div>
-                        </label>
-
-                        <label class="flex items-start gap-3 p-4 border rounded cursor-pointer"
                             [ngClass]="paymentMethod === 'WOMPI_PSE' ? 'border-gold bg-gold/5' : 'border-gray-200 bg-white'">
                             <input type="radio" name="paymentMethod" value="WOMPI_PSE" [(ngModel)]="paymentMethod" (change)="onPaymentMethodChange()" class="mt-1" />
                             <div>
                                 <p class="text-sm font-medium text-charcoal">Bancolombia / PSE (Wompi)</p>
                                 <p class="text-xs text-gray-500">Te redirige a tu banco para completar el pago</p>
+                            </div>
+                        </label>
+
+                        <label class="flex items-start gap-3 p-4 border rounded cursor-pointer"
+                            [ngClass]="paymentMethod === 'WOMPI_NEQUI' ? 'border-gold bg-gold/5' : 'border-gray-200 bg-white'">
+                            <input type="radio" name="paymentMethod" value="WOMPI_NEQUI" [(ngModel)]="paymentMethod" (change)="onPaymentMethodChange()" class="mt-1" />
+                            <div>
+                                <p class="text-sm font-medium text-charcoal">Nequi (Wompi)</p>
+                                <p class="text-xs text-gray-500">Te enviamos una solicitud de pago a tu Nequi</p>
+                            </div>
+                        </label>
+
+                        <label class="flex items-start gap-3 p-4 border rounded cursor-pointer"
+                            [ngClass]="paymentMethod === 'WOMPI_CARD' ? 'border-gold bg-gold/5' : 'border-gray-200 bg-white'">
+                            <input type="radio" name="paymentMethod" value="WOMPI_CARD" [(ngModel)]="paymentMethod" (change)="onPaymentMethodChange()" class="mt-1" />
+                            <div>
+                                <p class="text-sm font-medium text-charcoal">Tarjeta credito/debito (Wompi)</p>
+                                <p class="text-xs text-gray-500">Pago seguro con tarjeta</p>
                             </div>
                         </label>
                     </div>
@@ -120,6 +221,75 @@
                             </label>
                         </div>
                     </div>
+
+                    <div *ngIf="paymentMethod === 'WOMPI_NEQUI'" class="mt-5 border-t border-gray-100 pt-5">
+                        <div *ngIf="wompiLoading" class="text-xs text-gray-500">Cargando Wompi...</div>
+
+                        <div *ngIf="!wompiLoading" class="space-y-4">
+                            <div>
+                                <label class="block text-xs text-gray-500 mb-1 uppercase tracking-wider">Telefono Nequi *</label>
+                                <input type="text" [(ngModel)]="nequiPhone" class="w-full border border-gray-200 px-3 py-2 text-sm rounded"
+                                    placeholder="Ej: 3001234567" />
+                                <p class="text-[11px] text-gray-500 mt-2">Solo numeros. Debe coincidir con tu cuenta Nequi.</p>
+                            </div>
+
+                            <label class="flex items-start gap-3 text-xs text-gray-600">
+                                <input type="checkbox" [(ngModel)]="pseAcceptedTerms" class="mt-1" />
+                                <span>
+                                    Acepto los términos y condiciones de Wompi
+                                    <a *ngIf="wompiTermsUrl" [href]="wompiTermsUrl" target="_blank" rel="noopener noreferrer" class="text-gold font-bold hover:text-charcoal">(ver)</a>
+                                </span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div *ngIf="paymentMethod === 'WOMPI_CARD'" class="mt-5 border-t border-gray-100 pt-5">
+                        <div *ngIf="wompiLoading" class="text-xs text-gray-500">Cargando Wompi...</div>
+
+                        <div *ngIf="!wompiLoading" class="space-y-4">
+                            <div>
+                                <label class="block text-xs text-gray-500 mb-1 uppercase tracking-wider">Titular *</label>
+                                <input type="text" [(ngModel)]="cardHolderName" class="w-full border border-gray-200 px-3 py-2 text-sm rounded" placeholder="Nombre como aparece en la tarjeta" />
+                            </div>
+
+                            <div>
+                                <label class="block text-xs text-gray-500 mb-1 uppercase tracking-wider">Numero de tarjeta *</label>
+                                <input type="text" [(ngModel)]="cardNumber" class="w-full border border-gray-200 px-3 py-2 text-sm rounded" placeholder="1234 5678 9012 3456" />
+                            </div>
+
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <div>
+                                    <label class="block text-xs text-gray-500 mb-1 uppercase tracking-wider">Mes *</label>
+                                    <input type="text" [(ngModel)]="cardExpMonth" class="w-full border border-gray-200 px-3 py-2 text-sm rounded" placeholder="MM" />
+                                </div>
+                                <div>
+                                    <label class="block text-xs text-gray-500 mb-1 uppercase tracking-wider">Año *</label>
+                                    <input type="text" [(ngModel)]="cardExpYear" class="w-full border border-gray-200 px-3 py-2 text-sm rounded" placeholder="AA o AAAA" />
+                                </div>
+                                <div>
+                                    <label class="block text-xs text-gray-500 mb-1 uppercase tracking-wider">CVC *</label>
+                                    <input type="password" [(ngModel)]="cardCvc" class="w-full border border-gray-200 px-3 py-2 text-sm rounded" placeholder="***" />
+                                </div>
+                            </div>
+
+                            <div>
+                                <label class="block text-xs text-gray-500 mb-1 uppercase tracking-wider">Cuotas</label>
+                                <input type="number" min="1" max="36" [(ngModel)]="cardInstallments" class="w-full border border-gray-200 px-3 py-2 text-sm rounded" />
+                            </div>
+
+                            <label class="flex items-start gap-3 text-xs text-gray-600">
+                                <input type="checkbox" [(ngModel)]="pseAcceptedTerms" class="mt-1" />
+                                <span>
+                                    Acepto los términos y condiciones de Wompi
+                                    <a *ngIf="wompiTermsUrl" [href]="wompiTermsUrl" target="_blank" rel="noopener noreferrer" class="text-gold font-bold hover:text-charcoal">(ver)</a>
+                                </span>
+                            </label>
+
+                            <div class="text-[11px] text-gray-500">
+                                No guardamos tu tarjeta. La informacion se envia directamente a Wompi para generar el token.
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -155,10 +325,28 @@
                             <span>Envío</span>
                             <span class="text-green-600 font-medium">GRATIS</span>
                         </div>
+
+                        <!-- Extras (solo mostrar resumen si hay seleccion) -->
+                        <div *ngIf="envioPrioritario || perfumeLujo" class="mt-3 pt-3 border-t border-gray-100">
+                            <div class="text-xs font-bold text-charcoal uppercase tracking-widest mb-2">Extras</div>
+
+                            <div *ngIf="envioPrioritario" class="flex justify-between text-sm text-gray-500">
+                                <span>Envio prioritario</span>
+                                <span>{{ (envioPrioritarioPrecio || 0) | currency:'COP':'symbol-narrow':'1.0-0' }}</span>
+                            </div>
+                            <div *ngIf="perfumeLujo" class="flex justify-between text-sm text-gray-500 mt-2">
+                                <span>Perfume de lujo</span>
+                                <span>{{ (perfumeLujoPrecio || 0) | currency:'COP':'symbol-narrow':'1.0-0' }}</span>
+                            </div>
+                            <div class="flex justify-between text-sm text-gray-500 mt-3">
+                                <span>Total extras</span>
+                                <span>{{ extrasTotal | currency:'COP':'symbol-narrow':'1.0-0' }}</span>
+                            </div>
+                        </div>
                         <div
                             class="flex justify-between text-base font-bold text-charcoal border-t border-gray-200 pt-2 mt-2">
                             <span>TOTAL</span>
-                            <span>{{ cartTotal | currency:'COP':'symbol-narrow':'1.0-0' }}</span>
+                            <span>{{ grandTotal | currency:'COP':'symbol-narrow':'1.0-0' }}</span>
                         </div>
                     </div>
 

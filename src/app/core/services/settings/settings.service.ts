@@ -7,9 +7,12 @@ import { API_CONFIG } from '../../config/api-config';
 export interface Settings {
     hero_title: string;
     hero_subtitle: string;
+    hero_media_type?: 'image' | 'gif' | 'video' | null;
+    hero_media_url?: string | null;
     accent_color: string;
     show_banner: boolean;
     banner_text: string;
+    banner_accent_color?: string | null;
     hero_image_url?: string;
 
     logo_url?: string | null;
@@ -22,6 +25,12 @@ export interface Settings {
     whatsapp_number?: string | null;
     whatsapp_message?: string | null;
 
+    envio_prioritario_precio?: number | null;
+    perfume_lujo_precio?: number | null;
+
+    envio_prioritario_image_url?: string | null;
+    perfume_lujo_image_url?: string | null;
+
     email_from_name?: string | null;
     email_from_address?: string | null;
     email_reply_to?: string | null;
@@ -32,6 +41,19 @@ export interface Settings {
     boutique_address_line2?: string | null;
     boutique_phone?: string | null;
     boutique_email?: string | null;
+
+    seller_bank_name?: string | null;
+    seller_bank_account_type?: string | null;
+    seller_bank_account_number?: string | null;
+    seller_bank_account_holder?: string | null;
+    seller_bank_account_id?: string | null;
+    seller_nequi_number?: string | null;
+    seller_payment_notes?: string | null;
+
+    wompi_env?: 'sandbox' | 'production' | null;
+    // Nota: la llave publica no se expone por /settings (solo por /payments/wompi/config),
+    // pero se deja en el tipo para uso del admin.
+    wompi_public_key?: string | null;
 }
 
 @Injectable({

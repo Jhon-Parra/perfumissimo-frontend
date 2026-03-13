@@ -13,6 +13,9 @@ export interface CreateOrderDto {
   shipping_address: string;
   items: CartItemForOrder[];
   transaction_code?: string;
+
+  envio_prioritario?: boolean;
+  perfume_lujo?: boolean;
 }
 
 export interface OrderItem {
@@ -27,6 +30,11 @@ export interface OrderItem {
 export interface Order {
   id: string;
   total: number;
+  subtotal_productos?: number;
+  envio_prioritario?: boolean;
+  costo_envio_prioritario?: number;
+  perfume_lujo?: boolean;
+  costo_perfume_lujo?: number;
   estado: 'PENDIENTE' | 'PAGADO' | 'PROCESANDO' | 'ENVIADO' | 'CANCELADO' | 'ENTREGADO';
   direccion_envio: string;
   codigo_transaccion?: string;

@@ -29,6 +29,14 @@
                 </svg>
                 <span>Productos & IA</span>
             </a>
+            <a routerLink="/admin/categories"
+                class="flex items-center space-x-3 p-3 rounded-md hover:bg-gray-800 transition-colors">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M4 6h16M4 12h16M4 18h16" />
+                </svg>
+                <span>Categorías</span>
+            </a>
             <a routerLink="/admin/orders"
                 class="flex items-center space-x-3 p-3 rounded-md hover:bg-gray-800 transition-colors">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -36,6 +44,14 @@
                         d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path>
                 </svg>
                 <span>Pedidos</span>
+            </a>
+            <a routerLink="/admin/payments"
+                class="flex items-center space-x-3 p-3 rounded-md hover:bg-gray-800 transition-colors">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-10V6m0 12v-2m8-4a8 8 0 11-16 0 8 8 0 0116 0z" />
+                </svg>
+                <span>Pagos</span>
             </a>
             <a routerLink="/admin/promotions"
                 class="flex items-center space-x-3 p-3 rounded-md hover:bg-gray-800 transition-colors">
@@ -57,6 +73,13 @@
                         d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
                 </svg>
                 <span>Personalizar Página</span>
+            </a>
+            <a routerLink="/admin/permissions" class="flex items-center space-x-3 p-3 rounded-md hover:bg-gray-800 transition-colors">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622C17.176 19.29 21 14.59 21 9c0-1.042-.133-2.052-.382-3.016z" />
+                </svg>
+                <span>Permisos</span>
             </a>
             <a routerLink="/manual" class="flex items-center space-x-3 p-3 rounded-md hover:bg-gray-800 transition-colors">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -80,10 +103,26 @@
     </aside>
 
     <!-- Contenido -->
-    <main class="flex-1 p-8 overflow-y-auto">
-        <header class="flex justify-between items-center mb-8 border-b border-[#dcdcd4] pb-4">
+    <main class="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto">
+        <div class="md:hidden mb-6">
+            <div class="flex items-center justify-between gap-3">
+                <a routerLink="/admin" class="text-xs font-bold uppercase tracking-widest text-gold">← Admin</a>
+                <a routerLink="/" class="text-xs font-bold uppercase tracking-widest text-soft-charcoal">Tienda</a>
+            </div>
+            <div class="mt-3 -mx-1 overflow-x-auto">
+                <div class="flex gap-2 px-1 whitespace-nowrap">
+                    <a routerLink="/admin/products" class="px-3 py-2 text-[11px] uppercase tracking-widest font-bold border border-[#dcdcd4] bg-white rounded-md">Productos</a>
+                    <a routerLink="/admin/categories" class="px-3 py-2 text-[11px] uppercase tracking-widest font-bold border border-[#dcdcd4] bg-white rounded-md">Categorias</a>
+                    <a routerLink="/admin/orders" class="px-3 py-2 text-[11px] uppercase tracking-widest font-bold border border-[#dcdcd4] bg-white rounded-md">Pedidos</a>
+                    <a routerLink="/admin/promotions" class="px-3 py-2 text-[11px] uppercase tracking-widest font-bold border border-[#dcdcd4] bg-white rounded-md">Promos</a>
+                    <a routerLink="/admin/payments" class="px-3 py-2 text-[11px] uppercase tracking-widest font-bold border border-[#dcdcd4] bg-white rounded-md">Pagos</a>
+                    <a routerLink="/admin/settings" class="px-3 py-2 text-[11px] uppercase tracking-widest font-bold border border-[#dcdcd4] bg-white rounded-md">Apariencia</a>
+                </div>
+            </div>
+        </div>
+        <header class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-8 border-b border-[#dcdcd4] pb-4">
             <h1 class="font-serif text-3xl text-charcoal tracking-wide">Gestión de Productos</h1>
-            <div class="flex items-center gap-4">
+            <div class="flex flex-wrap items-center gap-3">
                 <app-low-stock-bell></app-low-stock-bell>
                 <button class="btn-primary px-6 py-2 shadow-sm text-sm" (click)="toggleForm()">
                     + NUEVO PRODUCTO
@@ -97,7 +136,7 @@
                 <div>
                     <h2 class="font-serif text-xl text-charcoal">Importar productos desde Excel</h2>
                     <p class="text-xs text-soft-charcoal mt-1">
-                        Sube un archivo <b>.xlsx</b> o <b>.csv</b>. Columnas sugeridas: nombre, genero, notas_olfativas,
+                        Sube un archivo <b>.xlsx</b> o <b>.csv</b>. Columnas sugeridas: nombre, categoria (slug), notas_olfativas,
                         descripcion, precio, stock, imagen_url, unidades_vendidas.
                     </p>
                 </div>
@@ -138,12 +177,17 @@
                     </div>
                     <div>
                         <label
-                            class="block text-xs font-bold text-soft-charcoal uppercase tracking-widest mb-1">Género</label>
+                            class="block text-xs font-bold text-soft-charcoal uppercase tracking-widest mb-1">Categoría</label>
                         <select name="genero" [(ngModel)]="newProduct.genero"
                             class="w-full border border-[#dcdcd4] rounded-sm p-3 focus:outline-none focus:border-gold bg-white">
-                            <option value="unisex">Unisex</option>
-                            <option value="mujer">Para Mujer</option>
-                            <option value="hombre">Para Hombre</option>
+                            <ng-container *ngIf="categoriesSupported; else generoFallback">
+                                <option *ngFor="let c of getActiveCategories()" [value]="c.slug">{{ c.nombre }}</option>
+                            </ng-container>
+                            <ng-template #generoFallback>
+                                <option value="unisex">Unisex</option>
+                                <option value="mujer">Para Mujer</option>
+                                <option value="hombre">Para Hombre</option>
+                            </ng-template>
                         </select>
                     </div>
                     <div>
@@ -169,6 +213,26 @@
                         <input type="number" name="stock" [(ngModel)]="newProduct.stock"
                             class="w-full border border-[#dcdcd4] rounded-sm p-3 focus:outline-none focus:border-gold"
                             placeholder="0">
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-3 rounded-md border border-[#ecece5] bg-[#f9f9f6] px-4 py-3">
+                    <input id="esNuevo" type="checkbox" name="esNuevo" [(ngModel)]="newProduct.esNuevo"
+                        (change)="onToggleNuevo()"
+                        class="h-4 w-4 accent-gold" />
+                    <label for="esNuevo" class="text-xs font-bold text-soft-charcoal uppercase tracking-widest select-none">
+                        Marcar como producto nuevo
+                    </label>
+                </div>
+
+                <div *ngIf="newProduct.esNuevo" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold text-soft-charcoal uppercase tracking-widest mb-1">Mostrar etiqueta hasta (opcional)</label>
+                        <input type="datetime-local" name="nuevoHasta" [(ngModel)]="newProduct.nuevoHasta"
+                            class="w-full border border-[#dcdcd4] rounded-sm p-3 focus:outline-none focus:border-gold bg-white" />
+                        <p class="text-[11px] text-gray-500 mt-2">
+                            Si lo dejas vacío, la etiqueta "NUEVO" se mostrará sin fecha de vencimiento.
+                        </p>
                     </div>
                 </div>
 
@@ -230,13 +294,18 @@
                                 class="w-full border border-[#dcdcd4] rounded-sm p-2.5 text-sm focus:outline-none focus:border-gold bg-white" />
                         </div>
                         <div>
-                            <label class="block text-[10px] font-bold text-soft-charcoal uppercase tracking-widest mb-1">Genero</label>
+                            <label class="block text-[10px] font-bold text-soft-charcoal uppercase tracking-widest mb-1">Categoría</label>
                             <select [(ngModel)]="productFilterGender" (ngModelChange)="applyProductFilters()"
                                 class="w-full border border-[#dcdcd4] rounded-sm p-2.5 text-sm focus:outline-none focus:border-gold bg-white">
                                 <option value="all">Todos</option>
-                                <option value="mujer">Mujer</option>
-                                <option value="hombre">Hombre</option>
-                                <option value="unisex">Unisex</option>
+                                <ng-container *ngIf="categoriesSupported; else filterFallback">
+                                    <option *ngFor="let c of categories" [value]="c.slug">{{ c.nombre }}</option>
+                                </ng-container>
+                                <ng-template #filterFallback>
+                                    <option value="mujer">Mujer</option>
+                                    <option value="hombre">Hombre</option>
+                                    <option value="unisex">Unisex</option>
+                                </ng-template>
                             </select>
                         </div>
                         <div>
@@ -248,9 +317,9 @@
                                 <option value="out">Agotado (0)</option>
                             </select>
                         </div>
-                        <div>
-                            <label class="block text-[10px] font-bold text-soft-charcoal uppercase tracking-widest mb-1">Ordenar</label>
-                            <div class="flex gap-2">
+                         <div>
+                             <label class="block text-[10px] font-bold text-soft-charcoal uppercase tracking-widest mb-1">Ordenar</label>
+                            <div class="flex flex-col sm:flex-row gap-2">
                                 <select [(ngModel)]="productSort" (ngModelChange)="applyProductFilters()"
                                     class="flex-1 border border-[#dcdcd4] rounded-sm p-2.5 text-sm focus:outline-none focus:border-gold bg-white">
                                     <option value="name_asc">Nombre (A-Z)</option>
@@ -269,12 +338,13 @@
                 </div>
             </div>
 
-            <table class="w-full text-left text-sm text-soft-charcoal">
+            <div class="overflow-x-auto">
+            <table class="min-w-[980px] w-full text-left text-sm text-soft-charcoal">
                 <thead
                     class="bg-cream border-b border-[#ecece5] text-xs uppercase tracking-widest font-bold text-charcoal">
                     <tr>
                         <th class="p-4">Producto</th>
-                        <th class="p-4">Género</th>
+                        <th class="p-4">Categoría</th>
                         <th class="p-4">Notas</th>
                         <th class="p-4 text-right">Precio</th>
                         <th class="p-4 text-center">Stock</th>
@@ -289,8 +359,7 @@
                                 alt="Imagen Fragancia" class="w-10 h-10 rounded-sm object-cover">
                             <span class="font-bold text-charcoal">{{ product.nombre }}</span>
                         </td>
-                        <td class="p-4 uppercase text-[10px] tracking-widest font-bold text-gold">{{ product.genero ||
-                            'UNISEX' }}</td>
+                        <td class="p-4 uppercase text-[10px] tracking-widest font-bold text-gold">{{ product.categoria_nombre || (product.genero || 'UNISEX') }}</td>
                         <td class="p-4 truncate max-w-xs">{{ product.descripcion }}</td>
                         <td class="p-4 text-right font-bold text-charcoal">{{ product.precio | currency }}</td>
                         <td class="p-4 text-center cursor-pointer" (click)="!editingStockId && startEditStock(product)"
@@ -333,6 +402,7 @@
                     }
                 </tbody>
             </table>
+            </div>
         </div>
 
         <!-- Modal de Confirmación de Eliminación -->

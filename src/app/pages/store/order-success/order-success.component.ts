@@ -4,6 +4,7 @@ import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 
 import { OrderService, Order } from '../../../core/services/order/order.service';
 import { AuthService } from '../../../core/services/auth.service';
+import { WompiService } from '../../../core/services/payment/wompi.service';
 
 @Component({
   selector: 'app-order-success',
@@ -16,12 +17,14 @@ export class OrderSuccessComponent {
   loading = true;
   error = '';
   order: Order | null = null;
+  syncingPayment = false;
 
   constructor(
     private route: ActivatedRoute,
     private router: Router,
     private orderService: OrderService,
-    private authService: AuthService
+    private authService: AuthService,
+    private wompiService: WompiService
   ) {}
 
   ngOnInit(): void {
@@ -60,6 +63,22 @@ export class OrderSuccessComponent {
 
   print(): void {
     window.print();
+  }
+
+  syncPayment(): void {
+    if (!this.order?.id || this.syncingPayment) return;
+    this.syncingPayment = true;
+    this.wompiService.syncOrderPayment(this.order.id).subscribe({
+      next: () => {
+        this.syncingPayment = false;
+        this.fetch(this.order!.id);
+      },
+      error: (err) => {
+        this.syncingPayment = false;
+        const msg = err?.error?.message || err?.error?.error || 'No se pudo sincronizar el pago.';
+        this.error = msg;
+      }
+    });
   }
 
   getUserName(): string {

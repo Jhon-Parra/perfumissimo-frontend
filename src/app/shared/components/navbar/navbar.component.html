@@ -1,13 +1,19 @@
-<div class="w-full bg-cream text-charcoal font-sans" [ngStyle]="getLogoCssVars()">
+<div class="w-full bg-primary-green text-white font-sans" [ngStyle]="getLogoCssVars()">
   <!-- Top Banner -->
   <div *ngIf="!isAdminRoute && settings?.show_banner"
-    class="w-full bg-[#f2f2ef] py-2 flex justify-center items-center text-xs tracking-wider border-b border-[#e5e5e0]">
-    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2 text-sage" fill="none" viewBox="0 0 24 24"
-      stroke="currentColor" stroke-width="1.5">
+    class="w-full bg-dark-green py-2 flex justify-center items-center text-xs tracking-wider border-b border-primary-green/20 text-cream/90">
+    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"
+      stroke-width="1.5" [style.color]="$any(settings)?.banner_accent_color || settings?.accent_color || '#C2A878'">
       <path stroke-linecap="round" stroke-linejoin="round"
         d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
     </svg>
-    {{ settings?.banner_text || 'ENVÍO GRATIS EN PEDIDOS SUPERIORES A $50' }}
+    <span class="sr-only">Promo</span>
+    <span
+      class="px-3 py-1 rounded-full border bg-white/5 backdrop-blur-sm truncate max-w-[85vw] block sm:inline-block text-center"
+      [style.borderColor]="$any(settings)?.banner_accent_color || settings?.accent_color || '#C2A878'"
+      [style.color]="$any(settings)?.banner_accent_color || settings?.accent_color || '#C2A878'">
+      {{ settings?.banner_text || 'ENVÍO GRATIS EN PEDIDOS SUPERIORES A $50' }}
+    </span>
   </div>
 
   <!-- Navbar Main -->
@@ -24,23 +30,38 @@
       <!-- Center Links (Desktop) -->
       <div *ngIf="!isAdminRoute" class="hidden md:flex space-x-8 items-center pt-1">
         <a routerLink="/"
-          class="text-charcoal hover:text-gold transition-colors duration-200 text-sm font-medium tracking-widest border-b-2 border-charcoal pb-1">INICIO</a>
+          class="text-cream/90 hover:text-white transition-colors duration-200 text-sm font-medium tracking-widest border-b-2 border-white pb-1">INICIO</a>
         <a routerLink="/catalog"
-          class="text-charcoal hover:text-gold transition-colors duration-200 text-sm font-medium tracking-widest border-b-2 border-transparent pb-1 hover:border-gold">CATÁLOGO</a>
+          class="text-cream/80 hover:text-white transition-colors duration-200 text-sm font-medium tracking-widest border-b-2 border-transparent pb-1 hover:border-gold">CATÁLOGO</a>
+        <a routerLink="/promotions"
+          class="text-cream/80 hover:text-white transition-colors duration-200 text-sm font-medium tracking-widest border-b-2 border-transparent pb-1 hover:border-gold">PROMOCIONES</a>
         <a routerLink="/contact"
-          class="text-charcoal hover:text-gold transition-colors duration-200 text-sm font-medium tracking-widest border-b-2 border-transparent pb-1 hover:border-gold">CONTACTO</a>
+          class="text-cream/80 hover:text-white transition-colors duration-200 text-sm font-medium tracking-widest border-b-2 border-transparent pb-1 hover:border-gold">CONTACTO</a>
         <a *ngIf="authService.isAuthenticated()" routerLink="/my-orders"
-          class="text-charcoal hover:text-gold transition-colors duration-200 text-sm font-medium tracking-widest border-b-2 border-transparent pb-1 hover:border-gold">PEDIDOS</a>
+          class="text-cream/80 hover:text-white transition-colors duration-200 text-sm font-medium tracking-widest border-b-2 border-transparent pb-1 hover:border-gold">PEDIDOS</a>
       </div>
 
       <!-- Icons (Right) -->
-      <div class="flex items-center space-x-6">
-        <!-- Buscador Desplegable / Input -->
+      <div class="flex items-center space-x-3 sm:space-x-6">
+
+        <!-- Mobile Hamburger (Store only) -->
+        <button *ngIf="!isAdminRoute" type="button" (click)="toggleMobileMenu()" aria-label="Abrir menu"
+          class="md:hidden w-10 h-10 rounded-full border border-[#ecece5] bg-white text-charcoal flex items-center justify-center hover:bg-[#f9f9f6] transition-colors">
+          <svg *ngIf="!mobileMenuOpen" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+            stroke-width="1.5">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+          </svg>
+          <svg *ngIf="mobileMenuOpen" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+            stroke-width="1.5">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+        <!-- Buscador (solo desktop) -->
         <div *ngIf="!isAdminRoute"
-          class="relative flex items-center border-b border-transparent hover:border-gold focus-within:border-gold transition-colors pb-1 group">
+          class="hidden md:flex relative items-center border-b border-white/20 hover:border-gold focus-within:border-gold transition-colors pb-1 group">
           <input type="text" [(ngModel)]="searchTerm" (keyup.enter)="onSearch()" placeholder="Buscar perfumes..."
-            class="w-0 opacity-0 group-hover:w-32 group-hover:opacity-100 focus:w-40 focus:opacity-100 transition-all duration-300 ease-in-out bg-transparent text-sm text-charcoal placeholder-gray-400 focus:outline-none px-1">
-          <button (click)="onSearch()" class="text-charcoal hover:text-gold transition-colors ml-1 z-10">
+            class="w-0 opacity-0 group-hover:w-32 group-hover:opacity-100 focus:w-40 focus:opacity-100 transition-all duration-300 ease-in-out bg-transparent text-sm text-white placeholder-cream/40 focus:outline-none px-1">
+          <button (click)="onSearch()" class="text-cream hover:text-white transition-colors ml-1 z-10">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
               <path stroke-linecap="round" stroke-linejoin="round"
                 d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"></path>
@@ -48,12 +69,14 @@
           </button>
         </div>
 
-        <app-low-stock-bell *ngIf="!isAdminRoute"></app-low-stock-bell>
+        <div class="hidden md:block">
+          <app-low-stock-bell *ngIf="!isAdminRoute"></app-low-stock-bell>
+        </div>
 
         <!-- Logged In View -->
         <ng-container *ngIf="authService.isAuthenticated(); else loggedOut">
-          <div class="relative group">
-            <button class="text-charcoal hover:text-gold transition-colors flex items-center gap-2">
+          <div class="relative group" [ngClass]="!isAdminRoute ? 'hidden md:block' : ''">
+            <button class="text-cream/90 hover:text-white transition-colors flex items-center gap-2">
               <!-- Avatar with photo or initials -->
               <div class="w-8 h-8 rounded-full overflow-hidden bg-gold flex items-center justify-center">
                 <img *ngIf="authService.getUserPhoto()" [src]="authService.getUserPhoto()" alt="Perfil"
@@ -62,7 +85,8 @@
                   {{ authService.getUserInitials() }}
                 </span>
               </div>
-              <span class="hidden md:inline text-sm">{{ authService.getUserName() }}</span>
+              <span class="hidden md:inline text-sm font-bold text-gold max-w-[160px] truncate">{{
+                authService.getUserName() }}</span>
             </button>
             <div
               class="absolute right-0 mt-2 w-56 bg-white border border-gray-100 rounded-md shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 z-50">
@@ -99,7 +123,8 @@
 
         <!-- Guest View -->
         <ng-template #loggedOut>
-          <a routerLink="/login" class="text-charcoal hover:text-gold transition-colors">
+          <a routerLink="/login" class="text-charcoal hover:text-gold transition-colors"
+            [ngClass]="!isAdminRoute ? 'hidden md:block' : ''">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
               <path stroke-linecap="round" stroke-linejoin="round"
                 d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z">
@@ -110,44 +135,114 @@
 
         <!-- Wishlist -->
         <a *ngIf="!isAdminRoute" routerLink="/favorites"
-          class="flex flex-col items-center hover:text-red-500 transition-colors relative group">
-          <span class="mr-1 text-xs uppercase tracking-wider hidden sm:block">Favoritos</span>
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
-            <path stroke-linecap="round" stroke-linejoin="round"
-              d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z">
-            </path>
-          </svg>
-          <span *ngIf="authService.isAuthenticated() && (favoritesCount$ | async) !== 0"
-            class="absolute -top-1.5 -right-2 bg-sage text-white text-[10px] rounded-full h-4 w-4 flex items-center justify-center font-bold">{{
-            favoritesCount$ | async }}</span>
+          class="hidden md:flex flex-col items-center text-cream/80 hover:text-red-400 transition-colors relative group">
+          <div class="relative">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
+              <path stroke-linecap="round" stroke-linejoin="round"
+                d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z">
+              </path>
+            </svg>
+            <span *ngIf="authService.isAuthenticated() && (favoritesCount$ | async) !== 0"
+              class="absolute -top-2 -right-2 bg-sage text-white text-[10px] rounded-full h-4 w-4 flex items-center justify-center font-bold">
+              {{ favoritesCount$ | async }}
+            </span>
+          </div>
+          <span class="text-[10px] mt-1 hidden lg:block tracking-widest uppercase">Favoritos</span>
         </a>
 
-        <!-- Orders -->
-        <a *ngIf="!isAdminRoute && authService.isAuthenticated()" routerLink="/my-orders"
-          class="flex flex-col items-center hover:text-gold transition-colors relative group md:hidden">
-          <span class="mr-1 text-xs uppercase tracking-wider hidden sm:block">Pedidos</span>
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
-            <path stroke-linecap="round" stroke-linejoin="round"
-              d="M9 12h6m-6 4h6M7.5 20.25h9A2.25 2.25 0 0018.75 18V6A2.25 2.25 0 0016.5 3.75h-9A2.25 2.25 0 005.25 6v12A2.25 2.25 0 007.5 20.25z" />
-          </svg>
-        </a>
-
-        <!-- Cart -->
-        <a *ngIf="!isAdminRoute" routerLink="/checkout" class="flex flex-col items-center hover:text-gold transition-colors relative group">
+        <!-- Cart (solo desktop) -->
+        <a *ngIf="!isAdminRoute" routerLink="/checkout"
+          class="hidden md:flex flex-col items-center text-cream/80 hover:text-gold transition-colors relative group">
           <div class="relative">
             <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round"
                 d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 00-3 3h15.75m-12.75-3h11.218c1.121-2.3 2.1-4.684 2.924-7.138a60.114 60.114 0 00-16.536-1.84M7.5 14.25L5.106 5.272M6 20.25a.75.75 0 11-1.5 0 .75.75 0 011.5 0zm12.75 0a.75.75 0 11-1.5 0 .75.75 0 011.5 0z" />
             </svg>
-            <span *ngIf="authService.isAuthenticated() && (cartItemCount$ | async) as count"
-              class="absolute -top-2 -right-2 bg-[#C2A878] text-white text-[10px] w-4 h-4 rounded-full flex items-center justify-center font-bold">
+            <span *ngIf="(cartItemCount$ | async) as count"
+              class="absolute -top-2 -right-2 bg-gold text-white text-[10px] w-4 h-4 rounded-full flex items-center justify-center font-bold">
               {{ count }}
             </span>
           </div>
-          <span class="text-[10px] mt-1 hidden lg:block tracking-widest">CARRITO</span>
+          <span class="text-[10px] mt-1 hidden lg:block tracking-widest uppercase">CARRITO</span>
         </a>
       </div>
 
     </div>
   </nav>
+
+  <!-- Mobile Menu (Store) -->
+  <div *ngIf="!isAdminRoute" class="md:hidden">
+    <div *ngIf="mobileMenuOpen" class="fixed inset-0 z-50">
+      <div class="absolute inset-0 bg-black/35" (click)="closeMobileMenu()"></div>
+
+      <div
+        class="absolute top-0 left-0 right-0 bg-cream border-b border-[#e5e5e0] shadow-sm max-h-screen overflow-y-auto">
+        <div class="max-w-7xl mx-auto px-6 py-4">
+          <div class="flex items-center justify-between mt-2">
+            <div class="text-xs font-bold uppercase tracking-widest text-soft-charcoal">Menu</div>
+            <button type="button" (click)="closeMobileMenu()" aria-label="Cerrar menu"
+              class="w-10 h-10 rounded-full border border-[#ecece5] bg-white text-charcoal flex items-center justify-center hover:bg-[#f9f9f6] transition-colors">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+
+          <div class="mt-4">
+            <div class="flex items-center gap-2 border border-[#ecece5] bg-white rounded-md px-3 py-2">
+              <input type="text" [(ngModel)]="searchTerm" (keyup.enter)="onSearch()" placeholder="Buscar perfumes..."
+                class="flex-1 bg-transparent text-sm text-charcoal placeholder-gray-400 focus:outline-none" />
+              <button type="button" (click)="onSearch()" class="text-charcoal hover:text-gold transition-colors">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
+                  <path stroke-linecap="round" stroke-linejoin="round"
+                    d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"></path>
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          <div class="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs font-bold uppercase tracking-widest">
+            <a routerLink="/" (click)="closeMobileMenu()"
+              class="px-5 py-4 bg-white border border-[#ecece5] rounded-md text-charcoal text-center shadow-sm">Inicio</a>
+            <a routerLink="/catalog" (click)="closeMobileMenu()"
+              class="px-5 py-4 bg-white border border-[#ecece5] rounded-md text-charcoal text-center shadow-sm">Catalogo</a>
+            <a routerLink="/promotions" (click)="closeMobileMenu()"
+              class="px-5 py-4 bg-white border border-[#ecece5] rounded-md text-charcoal text-center shadow-sm">Promociones</a>
+            <a routerLink="/contact" (click)="closeMobileMenu()"
+              class="px-5 py-4 bg-white border border-[#ecece5] rounded-md text-charcoal text-center shadow-sm">Contacto</a>
+            <a routerLink="/checkout" (click)="closeMobileMenu()"
+              class="px-5 py-4 bg-white border border-[#ecece5] rounded-md text-charcoal text-center shadow-sm">
+              Carrito
+              <ng-container *ngIf="(cartItemCount$ | async) as c">
+                <span *ngIf="c" class="ml-1 text-gold">({{ c }})</span>
+              </ng-container>
+            </a>
+            <a *ngIf="authService.isAuthenticated()" routerLink="/my-orders" (click)="closeMobileMenu()"
+              class="px-5 py-4 bg-white border border-[#ecece5] rounded-md text-charcoal text-center shadow-sm">Pedidos</a>
+            <a routerLink="/favorites" (click)="closeMobileMenu()"
+              class="px-5 py-4 bg-white border border-[#ecece5] rounded-md text-charcoal text-center shadow-sm">Favoritos</a>
+          </div>
+
+          <div class="mt-8 pt-6 pb-4 border-t border-[#e5e5e0] flex flex-col gap-3">
+            <a *ngIf="!authService.isAuthenticated()" routerLink="/login" (click)="closeMobileMenu()"
+              class="btn-primary px-6 py-3 text-xs tracking-widest uppercase text-center shadow-md">Iniciar sesion</a>
+
+            <a *ngIf="authService.isAuthenticated()" routerLink="/profile" (click)="closeMobileMenu()"
+              class="px-6 py-3 text-xs tracking-widest uppercase text-center border border-[#dcdcd4] bg-white text-charcoal rounded-md shadow-sm">Mi
+              perfil</a>
+
+            <a *ngIf="authService.getUserRole() === 'ADMIN' || authService.getUserRole() === 'SUPERADMIN'"
+              routerLink="/admin" (click)="closeMobileMenu()"
+              class="px-6 py-3 text-xs tracking-widest uppercase text-center border border-[#dcdcd4] bg-white text-charcoal rounded-md shadow-sm">Panel
+              admin</a>
+
+            <button *ngIf="authService.isAuthenticated()" type="button" (click)="logout()"
+              class="px-6 py-3 text-xs tracking-widest uppercase text-center border border-red-200 bg-white text-red-700 rounded-md shadow-sm">
+              Cerrar sesion
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>

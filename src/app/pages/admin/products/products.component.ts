@@ -5,6 +5,7 @@ import { FormsModule } from '@angular/forms';
 import { ProductService, Product } from '../../../core/services/product/product.service';
 import { AiService } from '../../../core/services/ai/ai.service';
 import { AuthService } from '../../../core/services/auth.service';
+import { CategoryService, Category } from '../../../core/services/category/category.service';
 import Swal from 'sweetalert2';
 import { LowStockBellComponent } from '../../../shared/components/low-stock-bell/low-stock-bell.component';
 
@@ -21,10 +22,13 @@ export class ProductsComponent implements OnInit {
   filteredProducts: Product[] = [];
 
   productFilterText = '';
-  productFilterGender: 'all' | 'mujer' | 'hombre' | 'unisex' = 'all';
+  productFilterGender: 'all' | string = 'all';
   productFilterStock: 'all' | 'low' | 'out' = 'all';
   productSort: 'name_asc' | 'price_desc' | 'price_asc' | 'stock_asc' | 'stock_desc' = 'name_asc';
   private readonly lowStockThreshold = 5;
+
+  categories: Category[] = [];
+  categoriesSupported = false;
 
   newProduct = {
     nombre: '',
@@ -32,7 +36,9 @@ export class ProductsComponent implements OnInit {
     notas: '',
     precio: 0,
     stock: 0,
-    descripcion: ''
+    descripcion: '',
+    esNuevo: false,
+    nuevoHasta: ''
   };
   editingProductId: string | null = null;
   selectedFile: File | null = null;
@@ -50,11 +56,42 @@ export class ProductsComponent implements OnInit {
   constructor(
     private productService: ProductService,
     private aiService: AiService,
-    private authService: AuthService // Injected AuthService
+    private authService: AuthService, // Injected AuthService
+    private categoryService: CategoryService
   ) { }
 
   ngOnInit(): void {
+    this.loadCategories();
     this.loadProducts();
+  }
+
+  loadCategories(): void {
+    this.categoryService.getAdminCategories().subscribe({
+      next: (rows) => {
+        this.categories = (rows || []).slice().sort((a, b) => String(a?.nombre || '').localeCompare(String(b?.nombre || ''), 'es'));
+        this.categoriesSupported = this.categories.length > 0;
+
+        if (this.categoriesSupported) {
+          const active = this.getActiveCategories();
+          const slugs = new Set((active || []).map(c => String(c.slug || '').toLowerCase()).filter(Boolean));
+          const current = String((this.newProduct as any)?.genero || '').toLowerCase();
+          if (!current || !slugs.has(current)) {
+            const first = active?.[0]?.slug;
+            if (first) (this.newProduct as any).genero = first;
+          }
+        }
+      },
+      error: () => {
+        // Si la migración no está aplicada, el backend responde 400. Mantener fallback (mujer/hombre/unisex).
+        this.categories = [];
+        this.categoriesSupported = false;
+      }
+    });
+  }
+
+  getActiveCategories(): Category[] {
+    if (!this.categoriesSupported) return [];
+    return (this.categories || []).filter(c => c.activo !== false);
   }
 
   loadProducts() {
@@ -272,6 +309,9 @@ export class ProductsComponent implements OnInit {
     formData.append('descripcion', this.newProduct.descripcion);
     formData.append('precio', this.newProduct.precio.toString());
     formData.append('stock', this.newProduct.stock.toString());
+    formData.append('es_nuevo', this.newProduct.esNuevo ? 'true' : 'false');
+    // Si viene vacio, el backend lo interpreta como NULL (limpiar)
+    formData.append('nuevo_hasta', (this.newProduct.nuevoHasta || '').trim());
     if (this.selectedFile) {
       formData.append('imagen', this.selectedFile);
     }
@@ -313,11 +353,13 @@ export class ProductsComponent implements OnInit {
     this.editingProductId = product.id || null;
     this.newProduct = {
       nombre: product.nombre,
-      genero: product.genero || 'unisex',
+      genero: (product as any).categoria_slug || product.genero || 'unisex',
       notas: '', // Solo para la IA, no guardamos esto directamente
       precio: typeof product.precio === 'string' ? parseFloat(product.precio) : (product.precio || 0),
       stock: product.stock,
-      descripcion: product.descripcion || ''
+      descripcion: product.descripcion || '',
+      esNuevo: !!product.es_nuevo,
+      nuevoHasta: product.nuevo_hasta ? this.toDateTimeLocal(product.nuevo_hasta) : ''
     };
     this.selectedFile = null;
     this.showForm = true;
@@ -401,9 +443,23 @@ export class ProductsComponent implements OnInit {
   }
 
   resetForm() {
-    this.newProduct = { nombre: '', genero: 'unisex', notas: '', precio: 0, stock: 0, descripcion: '' };
+    this.newProduct = { nombre: '', genero: 'unisex', notas: '', precio: 0, stock: 0, descripcion: '', esNuevo: false, nuevoHasta: '' };
     this.selectedFile = null;
     this.editingProductId = null;
+  }
+
+  onToggleNuevo(): void {
+    if (!this.newProduct.esNuevo) {
+      this.newProduct.nuevoHasta = '';
+    }
+  }
+
+  private toDateTimeLocal(raw: string): string {
+    // Soporta ISO o timestamp; devuelve yyyy-MM-ddTHH:mm
+    const d = new Date(raw);
+    if (Number.isNaN(d.getTime())) return '';
+    const pad = (n: number) => String(n).padStart(2, '0');
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
   }
 
   logout() {

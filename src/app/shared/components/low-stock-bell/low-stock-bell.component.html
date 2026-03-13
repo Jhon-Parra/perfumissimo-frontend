@@ -12,7 +12,7 @@
     <div class="panel-head">
       <div>
         <div class="panel-kicker">Inventario</div>
-        <div class="panel-title">Bajo stock (<= {{ threshold }})</div>
+        <div class="panel-title">Stock bajo ({{ threshold }} o menos)</div>
       </div>
       <div class="panel-actions">
         <button type="button" class="panel-link" (click)="refresh()">Actualizar</button>
@@ -29,9 +29,9 @@
         <img *ngIf="p.imagen_url" [src]="p.imagen_url" alt="" class="panel-img" />
         <div class="panel-meta">
           <div class="panel-name">{{ p.nombre }}</div>
-          <div class="panel-sub">Stock: {{ p.stock }}</div>
+          <div class="panel-sub">Quedan {{ p.stock }} unidades</div>
         </div>
-        <div class="panel-flag">BAJO</div>
+        <div class="panel-flag">STOCK</div>
       </a>
     </div>
 

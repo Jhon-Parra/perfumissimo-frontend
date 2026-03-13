@@ -18,9 +18,12 @@ export class SettingsComponent implements OnInit {
   settings: Settings = {
     hero_title: 'Cargando...',
     hero_subtitle: 'Cargando...',
+    hero_media_type: 'image',
+    hero_media_url: '',
     accent_color: '#C2A878',
     show_banner: false,
     banner_text: '',
+    banner_accent_color: '#C2A878',
     hero_image_url: '',
 
     logo_url: '',
@@ -32,6 +35,8 @@ export class SettingsComponent implements OnInit {
     whatsapp_number: '',
     whatsapp_message: ''
     ,
+    envio_prioritario_precio: 0,
+    perfume_lujo_precio: 0,
     email_from_name: '',
     email_from_address: '',
     email_reply_to: '',
@@ -46,6 +51,8 @@ export class SettingsComponent implements OnInit {
 
   selectedFile: File | null = null;
   selectedLogoFile: File | null = null;
+  selectedEnvioPrioritarioImageFile: File | null = null;
+  selectedPerfumeLujoImageFile: File | null = null;
   saving = false;
 
   instagramTokenInput = '';
@@ -66,14 +73,26 @@ export class SettingsComponent implements OnInit {
           logo_height_desktop: (data as any)?.logo_height_desktop ?? 112,
           logo_url: (data as any)?.logo_url ?? ''
         };
+
+        if (!(this.settings as any).banner_accent_color) {
+          (this.settings as any).banner_accent_color = (this.settings as any).accent_color || '#C2A878';
+        }
+
+        // Backward compat: si no viene hero_media_url, usar hero_image_url
+        if (!(this.settings as any).hero_media_url && (this.settings as any).hero_image_url) {
+          (this.settings as any).hero_media_url = (this.settings as any).hero_image_url;
+        }
+        if (!(this.settings as any).hero_media_type) {
+          (this.settings as any).hero_media_type = 'image';
+        }
         this.instagramTokenInput = '';
       },
       error: (err) => console.error('Error al cargar configuración', err)
     });
   }
 
-  getHeroImageUrl(): string {
-    const url = this.settings.hero_image_url;
+  getHeroMediaUrl(): string {
+    const url = (this.settings.hero_media_url || this.settings.hero_image_url || '').trim();
     if (!url) return '';
     // Si es una imagen base64 (recién seleccionada) o una URL HTTP completa (Supabase)
     if (url.startsWith('data:') || url.startsWith('http')) {
@@ -83,17 +102,62 @@ export class SettingsComponent implements OnInit {
     return `${API_CONFIG.serverUrl}${url.startsWith('/') ? '' : '/'}${url}`;
   }
 
-  onFileSelected(event: any) {
+  getHeroMediaType(): 'image' | 'gif' | 'video' {
+    const t = String((this.settings as any).hero_media_type || 'image').trim().toLowerCase();
+    if (t === 'video' || t === 'gif') return t;
+    return 'image';
+  }
+
+  getHeroAccept(): string {
+    return this.getHeroMediaType() === 'video'
+      ? 'video/mp4,video/webm'
+      : 'image/jpeg,image/png,image/webp,image/gif';
+  }
+
+  onHeroMediaSelected(event: any) {
     const file = event.target.files[0];
     if (file) {
+      const type = this.getHeroMediaType();
+      const mime = String(file.type || '').toLowerCase();
+      const isVideo = mime.startsWith('video/');
+      const isGif = mime === 'image/gif';
+      const isImage = mime.startsWith('image/');
+
+      const maxBytes = type === 'video' ? (30 * 1024 * 1024) : (10 * 1024 * 1024);
+      if (file.size > maxBytes) {
+        alert(type === 'video' ? 'El video es demasiado grande. Limite: 30MB.' : 'La imagen es demasiado grande. Limite: 10MB.');
+        event.target.value = '';
+        return;
+      }
+
+      if (type === 'video' && !isVideo) {
+        alert('Seleccionaste "Video" pero el archivo no es un video.');
+        event.target.value = '';
+        return;
+      }
+      if (type === 'gif' && !isGif) {
+        alert('Seleccionaste "GIF" pero el archivo no es GIF.');
+        event.target.value = '';
+        return;
+      }
+      if (type === 'image' && !isImage) {
+        alert('Seleccionaste "Imagen" pero el archivo no es una imagen.');
+        event.target.value = '';
+        return;
+      }
+
       this.selectedFile = file;
 
-      // Mostrar preview (Opcional, si queremos mostrarlo)
-      const reader = new FileReader();
-      reader.onload = (e: any) => {
-        this.settings.hero_image_url = e.target.result;
-      };
-      reader.readAsDataURL(file);
+      if (isVideo) {
+        const url = URL.createObjectURL(file);
+        (this.settings as any).hero_media_url = url;
+      } else {
+        const reader = new FileReader();
+        reader.onload = (e: any) => {
+          (this.settings as any).hero_media_url = e.target.result;
+        };
+        reader.readAsDataURL(file);
+      }
     }
   }
 
@@ -117,6 +181,42 @@ export class SettingsComponent implements OnInit {
     }
   }
 
+  getEnvioPrioritarioImageUrl(): string {
+    const url = String((this.settings as any).envio_prioritario_image_url || '').trim();
+    if (!url) return '';
+    if (url.startsWith('data:') || url.startsWith('http')) return url;
+    return `${API_CONFIG.serverUrl}${url.startsWith('/') ? '' : '/'}${url}`;
+  }
+
+  onEnvioPrioritarioImageSelected(event: any) {
+    const file = event.target.files[0];
+    if (!file) return;
+    this.selectedEnvioPrioritarioImageFile = file;
+    const reader = new FileReader();
+    reader.onload = (e: any) => {
+      (this.settings as any).envio_prioritario_image_url = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  }
+
+  getPerfumeLujoImageUrl(): string {
+    const url = String((this.settings as any).perfume_lujo_image_url || '').trim();
+    if (!url) return '';
+    if (url.startsWith('data:') || url.startsWith('http')) return url;
+    return `${API_CONFIG.serverUrl}${url.startsWith('/') ? '' : '/'}${url}`;
+  }
+
+  onPerfumeLujoImageSelected(event: any) {
+    const file = event.target.files[0];
+    if (!file) return;
+    this.selectedPerfumeLujoImageFile = file;
+    const reader = new FileReader();
+    reader.onload = (e: any) => {
+      (this.settings as any).perfume_lujo_image_url = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  }
+
   saveSettings() {
     this.saving = true;
 
@@ -124,9 +224,11 @@ export class SettingsComponent implements OnInit {
     const formData = new FormData();
     formData.append('hero_title', this.settings.hero_title);
     formData.append('hero_subtitle', this.settings.hero_subtitle);
+    formData.append('hero_media_type', this.getHeroMediaType());
     formData.append('accent_color', this.settings.accent_color);
     formData.append('show_banner', this.settings.show_banner ? 'true' : 'false');
     formData.append('banner_text', this.settings.banner_text);
+    formData.append('banner_accent_color', String((this.settings as any).banner_accent_color || this.settings.accent_color || '#C2A878'));
 
     formData.append('logo_height_mobile', String(this.settings.logo_height_mobile ?? 96));
     formData.append('logo_height_desktop', String(this.settings.logo_height_desktop ?? 112));
@@ -135,6 +237,9 @@ export class SettingsComponent implements OnInit {
     formData.append('facebook_url', this.settings.facebook_url || '');
     formData.append('whatsapp_number', this.settings.whatsapp_number || '');
     formData.append('whatsapp_message', this.settings.whatsapp_message || '');
+
+    formData.append('envio_prioritario_precio', String((this.settings as any).envio_prioritario_precio ?? 0));
+    formData.append('perfume_lujo_precio', String((this.settings as any).perfume_lujo_precio ?? 0));
 
     formData.append('email_from_name', this.settings.email_from_name || '');
     formData.append('email_from_address', this.settings.email_from_address || '');
@@ -153,29 +258,52 @@ export class SettingsComponent implements OnInit {
     }
 
     if (this.selectedFile) {
-      formData.append('hero_image', this.selectedFile);
+      formData.append('hero_media', this.selectedFile);
     }
 
     if (this.selectedLogoFile) {
       formData.append('logo_image', this.selectedLogoFile);
     }
 
+    if (this.selectedEnvioPrioritarioImageFile) {
+      formData.append('envio_prioritario_image', this.selectedEnvioPrioritarioImageFile);
+    }
+
+    if (this.selectedPerfumeLujoImageFile) {
+      formData.append('perfume_lujo_image', this.selectedPerfumeLujoImageFile);
+    }
+
     this.settingsService.updateSettings(formData).subscribe({
       next: (res) => {
         this.saving = false;
+        if (res && res.hero_media_url) {
+          (this.settings as any).hero_media_url = res.hero_media_url;
+        }
+        if (res && res.hero_media_type) {
+          (this.settings as any).hero_media_type = res.hero_media_type;
+        }
         if (res && res.hero_image_url) {
           this.settings.hero_image_url = res.hero_image_url;
         }
         if (res && res.logo_url) {
           this.settings.logo_url = res.logo_url;
         }
+        if (res && res.envio_prioritario_image_url) {
+          (this.settings as any).envio_prioritario_image_url = res.envio_prioritario_image_url;
+        }
+        if (res && res.perfume_lujo_image_url) {
+          (this.settings as any).perfume_lujo_image_url = res.perfume_lujo_image_url;
+        }
         this.instagramTokenInput = '';
+        this.selectedEnvioPrioritarioImageFile = null;
+        this.selectedPerfumeLujoImageFile = null;
         alert('Configuración actualizada exitosamente');
       },
       error: (err) => {
         this.saving = false;
         console.error('Error:', err);
-        alert('Hubo un error al guardar');
+        const msg = err?.error?.error || err?.error?.message || err?.message || 'Hubo un error al guardar';
+        alert(msg);
       }
     });
   }
@@ -185,9 +313,12 @@ export class SettingsComponent implements OnInit {
       this.settings = {
         hero_title: 'La Esencia del Lujo',
         hero_subtitle: 'Descubre colecciones exclusivas creadas por maestros perfumistas de todo el mundo.',
+        hero_media_type: 'image',
+        hero_media_url: '/assets/images/hero_bg.webp',
         accent_color: '#C379AC',
         show_banner: true,
         banner_text: 'ENVÍO GRATIS EN PEDIDOS SUPERIORES 5000',
+        banner_accent_color: '#C2A878',
         hero_image_url: '/assets/images/hero_bg.webp',
         logo_url: '',
         logo_height_mobile: 96,

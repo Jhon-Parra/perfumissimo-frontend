@@ -17,7 +17,8 @@ export interface Promotion {
 
   // Reglas de asignacion (admin)
   product_scope?: 'GLOBAL' | 'SPECIFIC' | 'GENDER';
-  product_gender?: 'mujer' | 'hombre' | 'unisex' | null;
+  // Cuando product_scope = 'GENDER', este campo guarda el slug de categoria
+  product_gender?: string | null;
   product_ids?: string[];
   audience_scope?: 'ALL' | 'SEGMENT' | 'CUSTOMERS';
   audience_segment?: string | null;

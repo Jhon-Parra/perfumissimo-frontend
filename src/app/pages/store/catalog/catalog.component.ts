@@ -4,6 +4,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { ProductCardComponent, Product } from '../../../shared/components/product-card/product-card.component';
 import { ProductService } from '../../../core/services/product/product.service';
 import { SeoService } from '../../../core/services/seo/seo.service';
+import { CategoryService, Category } from '../../../core/services/category/category.service';
 
 @Component({
   selector: 'app-catalog',
@@ -20,8 +21,12 @@ export class CatalogComponent implements OnInit {
   searchTerm = '';
   selectedPromotionId = '';
 
+
+  categories: Category[] = [];
+
   constructor(
     private productService: ProductService,
+    private categoryService: CategoryService,
     private route: ActivatedRoute,
     private router: Router,
     private seo: SeoService
@@ -31,6 +36,15 @@ export class CatalogComponent implements OnInit {
     this.seo.set({
       title: 'Catalogo | Perfumissimo',
       description: 'Explora perfumes para mujer, hombre y unisex. Filtra por categoria y encuentra tu aroma ideal.'
+    });
+
+    this.categoryService.getPublicCategories().subscribe({
+      next: (rows) => {
+        this.categories = (rows || []).slice().sort((a, b) => String(a?.nombre || '').localeCompare(String(b?.nombre || ''), 'es'));
+      },
+      error: () => {
+        this.categories = [];
+      }
     });
 
     this.productService.getPublicCatalog().subscribe({
@@ -46,6 +60,8 @@ export class CatalogComponent implements OnInit {
           soldCount: (ap.unidades_vendidas || 0).toString(),
           isNew: !!ap.es_nuevo,
           genero: ap.genero,
+          categoria_nombre: (ap as any).categoria_nombre ?? null,
+          categoria_slug: (ap as any).categoria_slug ?? null,
           precio: (() => {
             const original = (ap as any).precio_original ?? ap.precio;
             return typeof original === 'string' ? parseFloat(original) : original;
@@ -62,7 +78,7 @@ export class CatalogComponent implements OnInit {
 
           const parts: string[] = [];
           if (this.selectedCategory && this.selectedCategory !== 'todos') {
-            parts.push(this.selectedCategory === 'mujer' ? 'Mujer' : (this.selectedCategory === 'hombre' ? 'Hombre' : 'Unisex'));
+            parts.push(this.getCategoryLabel(this.selectedCategory));
           }
           if (this.searchTerm && String(this.searchTerm).trim()) {
             parts.push(`Busqueda: ${String(this.searchTerm).trim()}`);
@@ -94,6 +110,24 @@ export class CatalogComponent implements OnInit {
       queryParams: { category: category !== 'todos' ? category : null },
       queryParamsHandling: 'merge',
     });
+  }
+
+  getCategoryLabel(slugRaw: string): string {
+    const slug = String(slugRaw || '').trim().toLowerCase();
+    if (!slug || slug === 'todos') return 'Todo';
+
+    const match = (this.categories || []).find(c => String(c.slug || '').toLowerCase() === slug);
+    if (match?.nombre) return match.nombre;
+
+    if (slug === 'mujer') return 'Mujer';
+    if (slug === 'hombre') return 'Hombre';
+    if (slug === 'unisex') return 'Unisex';
+
+    return slug
+      .split('-')
+      .filter(Boolean)
+      .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+      .join(' ');
   }
 
   applyFilters() {

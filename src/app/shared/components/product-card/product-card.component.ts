@@ -10,6 +10,8 @@ export interface Product {
   name: string;
   notes: string;
   genero?: string;
+  categoria_nombre?: string | null;
+  categoria_slug?: string | null;
   price: number;
   imageUrl: string;
   soldCount: string;
@@ -46,6 +48,39 @@ export class ProductCardComponent {
     private favoritesService: FavoritesService,
     private router: Router
   ) { }
+
+  getCategorySlug(): string {
+    const anyP: any = this.product as any;
+    const slug = String(anyP?.categoria_slug || this.product?.genero || 'unisex').trim().toLowerCase();
+    return slug || 'unisex';
+  }
+
+  getCategoryLabel(): string {
+    const anyP: any = this.product as any;
+    const name = String(anyP?.categoria_nombre || '').trim();
+    if (name) return name;
+
+    const slug = this.getCategorySlug();
+    if (slug === 'mujer') return 'Para Mujer';
+    if (slug === 'hombre') return 'Para Hombre';
+    if (slug === 'unisex') return 'Unisex';
+
+    return slug
+      .split('-')
+      .filter(Boolean)
+      .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+      .join(' ');
+  }
+
+  getCategoryClass(): { [klass: string]: boolean } {
+    const slug = this.getCategorySlug();
+    return {
+      'bg-pink-50 text-pink-600 border-pink-100': slug === 'mujer',
+      'bg-blue-50 text-blue-600 border-blue-100': slug === 'hombre',
+      'bg-gray-100 text-gray-500 border-gray-200': slug === 'unisex',
+      'bg-[#f9f9f6] text-soft-charcoal border-[#e7e7df]': slug !== 'mujer' && slug !== 'hombre' && slug !== 'unisex'
+    };
+  }
 
   get isFavorite(): boolean {
     return this.favoritesService.isFavorite(this.product.id);

@@ -33,6 +33,8 @@ export class ProductDetailComponent implements OnDestroy {
   related: CardProduct[] = [];
 
   quantity = 1;
+  addedToCartNotice = '';
+  private noticeTimer?: any;
 
   constructor(
     private route: ActivatedRoute,
@@ -45,6 +47,10 @@ export class ProductDetailComponent implements OnDestroy {
 
   ngOnDestroy(): void {
     this.seo.clearJsonLd();
+    if (this.noticeTimer) {
+      clearTimeout(this.noticeTimer);
+      this.noticeTimer = undefined;
+    }
   }
 
   ngOnInit(): void {
@@ -132,6 +138,8 @@ export class ProductDetailComponent implements OnDestroy {
             soldCount: String(ap.unidades_vendidas || 0),
             isNew: !!ap.es_nuevo,
             genero: ap.genero,
+            categoria_nombre: ap.categoria_nombre ?? null,
+            categoria_slug: ap.categoria_slug ?? null,
             precio: Number.isFinite(originalN) ? originalN : (Number.isFinite(final) ? final : 0),
             precio_con_descuento: ap.precio_con_descuento !== null && ap.precio_con_descuento !== undefined ? Number(ap.precio_con_descuento) : null,
             tiene_promocion: !!ap.tiene_promocion
@@ -265,11 +273,37 @@ export class ProductDetailComponent implements OnDestroy {
     this.quantity = Math.max(1, Math.trunc(Number(this.quantity || 1)) + 1);
   }
 
-  getGeneroLabel(): string {
-    const g = this.product?.genero;
-    if (g === 'mujer') return 'Para Mujer';
-    if (g === 'hombre') return 'Para Hombre';
-    return 'Unisex';
+  getCategoryLabel(): string {
+    const anyP: any = this.product as any;
+    const name = String(anyP?.categoria_nombre || '').trim();
+    if (name) return name;
+
+    const slug = String(anyP?.categoria_slug || this.product?.genero || 'unisex').trim().toLowerCase();
+    if (slug === 'mujer') return 'Para Mujer';
+    if (slug === 'hombre') return 'Para Hombre';
+    if (slug === 'unisex' || !slug) return 'Unisex';
+
+    return slug
+      .split('-')
+      .filter(Boolean)
+      .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+      .join(' ');
+  }
+
+  getCategorySlug(): string {
+    const anyP: any = this.product as any;
+    const slug = String(anyP?.categoria_slug || this.product?.genero || 'unisex').trim().toLowerCase();
+    return slug || 'unisex';
+  }
+
+  getCategoryClass(): { [klass: string]: boolean } {
+    const slug = this.getCategorySlug();
+    return {
+      'bg-pink-50 text-pink-600 border-pink-100': slug === 'mujer',
+      'bg-blue-50 text-blue-600 border-blue-100': slug === 'hombre',
+      'bg-gray-100 text-gray-500 border-gray-200': slug === 'unisex',
+      'bg-[#f9f9f6] text-soft-charcoal border-[#e7e7df]': slug !== 'mujer' && slug !== 'hombre' && slug !== 'unisex'
+    };
   }
 
   get isFavorite(): boolean {
@@ -289,7 +323,31 @@ export class ProductDetailComponent implements OnDestroy {
     if (!card) return;
     const qty = Math.max(1, Math.trunc(Number(this.quantity || 1)));
     this.quantity = qty;
-    this.cartService.addToCart(card, qty);
+
+    const stock = Number((this.product as any)?.stock ?? 0);
+    if (Number.isFinite(stock) && stock <= 0) {
+      this.addedToCartNotice = 'Este producto no tiene stock.';
+      if (this.noticeTimer) clearTimeout(this.noticeTimer);
+      this.noticeTimer = setTimeout(() => {
+        this.addedToCartNotice = '';
+      }, 2200);
+      return;
+    }
+
+    const finalQty = Number.isFinite(stock) && stock > 0 ? Math.min(qty, stock) : qty;
+    if (finalQty !== qty) {
+      this.quantity = finalQty;
+    }
+
+    this.cartService.addToCart(card, finalQty);
+
+    this.addedToCartNotice = finalQty !== qty && Number.isFinite(stock)
+      ? `Agregado al carrito (máximo disponible: ${stock}).`
+      : 'Agregado al carrito.';
+    if (this.noticeTimer) clearTimeout(this.noticeTimer);
+    this.noticeTimer = setTimeout(() => {
+      this.addedToCartNotice = '';
+    }, 2200);
   }
 
   private toCardProduct(): CardProduct | null {
@@ -300,6 +358,8 @@ export class ProductDetailComponent implements OnDestroy {
       name: this.product.nombre,
       notes: this.getNotes() === '—' ? '' : this.getNotes(),
       genero: this.product.genero,
+      categoria_nombre: (this.product as any).categoria_nombre ?? null,
+      categoria_slug: (this.product as any).categoria_slug ?? null,
       price: Number.isFinite(price) ? price : 0,
       imageUrl: this.product.imagen_url || 'https://images.unsplash.com/photo-1594035910387-fea47714263f?q=80&w=800&auto=format&fit=crop',
       soldCount: String(this.product.unidades_vendidas || 0),

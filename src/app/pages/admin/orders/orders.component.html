@@ -17,14 +17,23 @@
       <a routerLink="/admin/products" class="flex items-center space-x-3 p-3 rounded-md hover:bg-gray-800 transition-colors">
         <span>Productos & IA</span>
       </a>
+      <a routerLink="/admin/categories" class="flex items-center space-x-3 p-3 rounded-md hover:bg-gray-800 transition-colors">
+        <span>Categorias</span>
+      </a>
       <a routerLink="/admin/orders" class="flex items-center space-x-3 p-3 rounded-md bg-gray-800 text-gold transition-colors">
         <span>Pedidos</span>
+      </a>
+      <a routerLink="/admin/payments" class="flex items-center space-x-3 p-3 rounded-md hover:bg-gray-800 transition-colors">
+        <span>Pagos</span>
       </a>
       <a routerLink="/admin/promotions" class="flex items-center space-x-3 p-3 rounded-md hover:bg-gray-800 transition-colors">
         <span>Promociones</span>
       </a>
       <a routerLink="/admin/settings" class="flex items-center space-x-3 p-3 rounded-md hover:bg-gray-800 transition-colors">
         <span>Personalizar Página</span>
+      </a>
+      <a routerLink="/admin/permissions" class="flex items-center space-x-3 p-3 rounded-md hover:bg-gray-800 transition-colors">
+        <span>Permisos</span>
       </a>
       <a routerLink="/manual" class="flex items-center space-x-3 p-3 rounded-md hover:bg-gray-800 transition-colors">
         <span>Manual de uso</span>
@@ -38,13 +47,29 @@
     </div>
   </aside>
 
-  <main class="flex-1 p-8 overflow-y-auto">
+  <main class="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto">
+    <div class="md:hidden mb-6">
+      <div class="flex items-center justify-between gap-3">
+        <a routerLink="/admin" class="text-xs font-bold uppercase tracking-widest text-gold">← Admin</a>
+        <a routerLink="/" class="text-xs font-bold uppercase tracking-widest text-soft-charcoal">Tienda</a>
+      </div>
+      <div class="mt-3 -mx-1 overflow-x-auto">
+        <div class="flex gap-2 px-1 whitespace-nowrap">
+          <a routerLink="/admin/products" class="px-3 py-2 text-[11px] uppercase tracking-widest font-bold border border-[#dcdcd4] bg-white rounded-md">Productos</a>
+          <a routerLink="/admin/categories" class="px-3 py-2 text-[11px] uppercase tracking-widest font-bold border border-[#dcdcd4] bg-white rounded-md">Categorias</a>
+          <a routerLink="/admin/orders" class="px-3 py-2 text-[11px] uppercase tracking-widest font-bold border border-[#dcdcd4] bg-white rounded-md">Pedidos</a>
+          <a routerLink="/admin/promotions" class="px-3 py-2 text-[11px] uppercase tracking-widest font-bold border border-[#dcdcd4] bg-white rounded-md">Promos</a>
+          <a routerLink="/admin/payments" class="px-3 py-2 text-[11px] uppercase tracking-widest font-bold border border-[#dcdcd4] bg-white rounded-md">Pagos</a>
+          <a routerLink="/admin/settings" class="px-3 py-2 text-[11px] uppercase tracking-widest font-bold border border-[#dcdcd4] bg-white rounded-md">Apariencia</a>
+        </div>
+      </div>
+    </div>
     <header class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-8 border-b border-[#dcdcd4] pb-4">
       <div>
         <h1 class="font-serif text-3xl text-charcoal tracking-wide">Pedidos</h1>
         <p class="text-sm text-soft-charcoal mt-1">Administra estados y revisa el detalle de cada pedido.</p>
       </div>
-      <div class="flex items-center gap-4">
+      <div class="flex flex-wrap items-center gap-3">
         <app-low-stock-bell></app-low-stock-bell>
         <button class="bg-[#ecece5] hover:bg-gray-200 text-charcoal px-5 py-2 rounded-md transition-colors text-sm tracking-widest uppercase font-bold" (click)="load()">Actualizar</button>
         <button class="btn-secondary px-5 py-2 text-sm tracking-widest uppercase" (click)="exportCsv()" [disabled]="loading || !orders.length">Exportar CSV</button>
@@ -63,7 +88,7 @@
 
         <div class="md:col-span-2">
           <label class="block text-xs font-bold text-soft-charcoal uppercase tracking-widest mb-1">Buscar</label>
-          <div class="flex gap-3">
+          <div class="flex flex-col sm:flex-row gap-3">
             <input type="text" [(ngModel)]="query" placeholder="Numero de pedido o cliente (nombre/email)"
               class="flex-1 border border-[#dcdcd4] rounded-sm p-3 focus:outline-none focus:border-gold" />
             <button (click)="load()" class="btn-primary px-6 py-2 text-sm">Buscar</button>
@@ -79,7 +104,8 @@
     <div class="bg-white rounded-xl shadow-sm border border-[#ecece5] overflow-hidden">
       <div *ngIf="loading" class="p-6 text-sm text-soft-charcoal">Cargando pedidos...</div>
 
-      <table *ngIf="!loading" class="w-full text-left text-sm text-soft-charcoal">
+      <div class="overflow-x-auto">
+      <table *ngIf="!loading" class="min-w-[920px] w-full text-left text-sm text-soft-charcoal">
         <thead class="bg-cream border-b border-[#ecece5] text-xs uppercase tracking-widest font-bold text-charcoal">
           <tr>
             <th class="p-4">Pedido</th>
@@ -119,6 +145,7 @@
           </tr>
         </tbody>
       </table>
+      </div>
     </div>
 
     <!-- Detail Modal -->

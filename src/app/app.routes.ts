@@ -24,6 +24,8 @@ export const routes: Routes = [
     },
     { path: 'login', loadComponent: () => import('./pages/auth/login/login.component').then(m => m.LoginComponent) },
     { path: 'catalog', loadComponent: () => import('./pages/store/catalog/catalog.component').then(m => m.CatalogComponent) },
+    { path: 'promotions', loadComponent: () => import('./pages/store/promotions/promotions.component').then(m => m.PromotionsStoreComponent) },
+    { path: 'recommender', loadComponent: () => import('./pages/store/recommender/recommender.component').then(m => m.RecommenderComponent) },
     { path: 'manual', loadComponent: () => import('./pages/store/manual/manual.component').then(m => m.ManualComponent) },
     { path: 'contact', loadComponent: () => import('./pages/store/contact/contact.component').then(m => m.ContactComponent) },
     {
@@ -45,35 +47,53 @@ export const routes: Routes = [
         path: 'admin',
         loadComponent: () => import('./pages/admin/dashboard/dashboard.component').then(m => m.DashboardComponent),
         canActivate: [authGuard, roleGuard],
-        data: { roles: ['SUPERADMIN', 'ADMIN', 'VENTAS', 'PRODUCTOS'] }
+        data: { permission: 'admin.dashboard' }
     },
     {
         path: 'admin/products',
         loadComponent: () => import('./pages/admin/products/products.component').then(m => m.ProductsComponent),
         canActivate: [authGuard, roleGuard],
-        data: { roles: ['SUPERADMIN', 'ADMIN', 'PRODUCTOS'] }
+        data: { permission: 'admin.products' }
+    },
+    {
+        path: 'admin/categories',
+        loadComponent: () => import('./pages/admin/categories/categories.component').then(m => m.CategoriesComponent),
+        canActivate: [authGuard, roleGuard],
+        data: { permission: 'admin.products' }
     },
     {
         path: 'admin/orders',
         loadComponent: () => import('./pages/admin/orders/orders.component').then(m => m.OrdersComponent),
         canActivate: [authGuard, roleGuard],
-        data: { roles: ['SUPERADMIN', 'ADMIN', 'VENTAS'] }
+        data: { permission: 'admin.orders' }
+    },
+    {
+        path: 'admin/payments',
+        loadComponent: () => import('./pages/admin/payments/payments.component').then(m => m.PaymentsAdminComponent),
+        canActivate: [authGuard, roleGuard],
+        data: { permission: 'admin.payments' }
     },
     {
         path: 'admin/settings',
         loadComponent: () => import('./pages/admin/settings/settings.component').then(m => m.SettingsComponent),
         canActivate: [authGuard, roleGuard],
-        data: { roles: ['SUPERADMIN', 'ADMIN'] }
+        data: { permission: 'admin.settings' }
     },
     {
         path: 'admin/promotions',
         loadComponent: () => import('./pages/admin/promotions/promotions.component').then(m => m.PromotionsComponent),
         canActivate: [authGuard, roleGuard],
-        data: { roles: ['SUPERADMIN', 'ADMIN'] }
+        data: { permission: 'admin.promotions' }
     },
     {
         path: 'admin/users',
         loadComponent: () => import('./pages/admin/users/users.component').then(m => m.UsersComponent),
+        canActivate: [authGuard, roleGuard],
+        data: { permission: 'admin.users' }
+    },
+    {
+        path: 'admin/permissions',
+        loadComponent: () => import('./pages/admin/permissions/permissions.component').then(m => m.PermissionsComponent),
         canActivate: [authGuard, roleGuard],
         data: { roles: ['SUPERADMIN'] }
     },

@@ -1,6 +1,7 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
 import { API_CONFIG } from '../../core/config/api-config';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 import { ProductCardComponent, Product } from '../../shared/components/product-card/product-card.component';
 import { ProductService } from '../../core/services/product/product.service';
@@ -12,11 +13,28 @@ import { SeoService } from '../../core/services/seo/seo.service';
 @Component({
   selector: 'app-home',
   standalone: true,
-  imports: [CommonModule, RouterModule, ProductCardComponent],
+  imports: [CommonModule, FormsModule, RouterModule, ProductCardComponent],
   templateUrl: './home.component.html',
   styleUrls: ['./home.component.css']
 })
 export class HomeComponent implements OnInit {
+  private readonly HERO_VIDEO_SESSION_KEY = 'perfumissimo_hero_video_first_visit_done_v1';
+
+  heroVideoMode: 'first' | 'subsequent' = 'first';
+  heroVideoNeedsUserGesture = false;
+  heroVideoMuted = true;
+  heroVideoLoop = true;
+
+  private heroVideoEl: HTMLVideoElement | null = null;
+
+  @ViewChild('heroVideo')
+  set heroVideoRef(ref: ElementRef<HTMLVideoElement> | undefined) {
+    if (!ref?.nativeElement) return;
+    this.heroVideoEl = ref.nativeElement;
+    // Defer to allow attributes/bindings to settle
+    queueMicrotask(() => this.configureHeroVideo(ref.nativeElement));
+  }
+
   products: Product[] = [];
   loading = true;
   error = '';
@@ -33,6 +51,8 @@ export class HomeComponent implements OnInit {
   facebookUrl = '';
   whatsappUrl = '';
 
+  recoQuery = '';
+
   constructor(
     private productService: ProductService,
     private settingsService: SettingsService,
@@ -42,7 +62,19 @@ export class HomeComponent implements OnInit {
     private router: Router
   ) { }
 
+  goToRecommenderQuiz(): void {
+    this.router.navigate(['/recommender'], { queryParams: { mode: 'quiz' } });
+  }
+
+  goToRecommenderFree(): void {
+    const q = String(this.recoQuery || '').trim();
+    this.router.navigate(['/recommender'], { queryParams: q ? { mode: 'free', q } : { mode: 'free' } });
+  }
+
   ngOnInit(): void {
+    this.heroVideoMode = sessionStorage.getItem(this.HERO_VIDEO_SESSION_KEY) ? 'subsequent' : 'first';
+    this.heroVideoMuted = this.heroVideoMode === 'subsequent';
+    this.heroVideoLoop = this.heroVideoMode === 'subsequent';
     this.seo.set({
       title: 'Perfumissimo | Perfumes y Fragancias',
       description: 'Perfumes y fragancias para mujer, hombre y unisex. Descubre tu esencia en Perfumissimo.'
@@ -71,6 +103,8 @@ export class HomeComponent implements OnInit {
           soldCount: (ap.unidades_vendidas || 0).toString(),
           isNew: !!ap.es_nuevo,
           genero: ap.genero,
+          categoria_nombre: (ap as any).categoria_nombre ?? null,
+          categoria_slug: (ap as any).categoria_slug ?? null,
           precio: (() => {
             const original = (ap as any).precio_original ?? ap.precio;
             return typeof original === 'string' ? parseFloat(original) : original;
@@ -89,7 +123,6 @@ export class HomeComponent implements OnInit {
 
     this.promotionService.getPromotions().subscribe({
       next: (promos) => {
-        const now = Date.now();
         const typeOf = (p: Promotion) => String((p as any).discount_type || 'PERCENT').toUpperCase();
         const scoreOf = (p: Promotion) => {
           const t = typeOf(p);
@@ -100,9 +133,6 @@ export class HomeComponent implements OnInit {
         this.promotions = (promos || [])
           .filter(p => {
             if (!p?.activo) return false;
-            const startOk = new Date(p.fecha_inicio).getTime() <= now;
-            const endOk = new Date(p.fecha_fin).getTime() >= now;
-            if (!startOk || !endOk) return false;
             const t = typeOf(p);
             if (t === 'AMOUNT') return Number((p as any).amount_discount || 0) > 0;
             return Number(p.porcentaje_descuento || 0) > 0;
@@ -134,6 +164,77 @@ export class HomeComponent implements OnInit {
         this.instagramLoading = false;
       }
     });
+  }
+
+  private configureHeroVideo(video: HTMLVideoElement): void {
+    if (this.getHeroMediaType() !== 'video') return;
+
+    const isFirst = this.heroVideoMode === 'first';
+
+    // Marcar sesion inmediatamente: solo un intento "primera visita" por sesion.
+    if (isFirst) {
+      try { sessionStorage.setItem(this.HERO_VIDEO_SESSION_KEY, '1'); } catch { /* ignore */ }
+    }
+
+    // Estado base
+    this.heroVideoNeedsUserGesture = false;
+    video.controls = false;
+    video.playsInline = true;
+    this.heroVideoLoop = !isFirst;
+    this.heroVideoMuted = !isFirst;
+    video.loop = this.heroVideoLoop;
+    video.muted = this.heroVideoMuted;
+    video.currentTime = 0;
+
+    const attempt = () => {
+      const p = video.play();
+      if (p && typeof (p as any).catch === 'function') {
+        (p as Promise<any>).catch(() => {
+          // Autoplay con sonido suele bloquearse; fallback a muted autoplay
+          this.heroVideoMuted = true;
+          video.muted = true;
+          this.heroVideoNeedsUserGesture = true;
+          const p2 = video.play();
+          if (p2 && typeof (p2 as any).catch === 'function') {
+            (p2 as Promise<any>).catch(() => {
+              // Si incluso muted falla, mostrar CTA igualmente
+              this.heroVideoNeedsUserGesture = true;
+            });
+          }
+        });
+      }
+    };
+
+    // Si el navegador aun no cargo metadata, intentar cuando este listo
+    if (video.readyState >= 1) {
+      attempt();
+    } else {
+      const onMeta = () => {
+        video.removeEventListener('loadedmetadata', onMeta);
+        video.currentTime = 0;
+        attempt();
+      };
+      video.addEventListener('loadedmetadata', onMeta);
+    }
+  }
+
+  enableHeroVideoSound(): void {
+    // Solo aplica al modo first; en subsequent siempre muted segun requerimiento
+    if (this.heroVideoMode !== 'first') return;
+    const el = this.heroVideoEl;
+    if (!el) return;
+    this.heroVideoMuted = false;
+    el.muted = false;
+    el.currentTime = 0;
+    const p = el.play();
+    if (p && typeof (p as any).then === 'function') {
+      (p as Promise<any>).then(() => {
+        this.heroVideoNeedsUserGesture = false;
+      }).catch(() => {
+        // keep CTA
+        this.heroVideoNeedsUserGesture = true;
+      });
+    }
   }
 
   buyNow(): void {
@@ -205,14 +306,33 @@ export class HomeComponent implements OnInit {
     return message ? `${base}?text=${encodeURIComponent(message)}` : base;
   }
 
-  getHeroImageUrl(): string {
-    if (this.settings && this.settings.hero_image_url) {
-      if (this.settings.hero_image_url.startsWith('http') || this.settings.hero_image_url.startsWith('data:') || this.settings.hero_image_url.startsWith('/assets/')) {
-        return this.settings.hero_image_url;
+  getHeroMediaType(): 'image' | 'gif' | 'video' {
+    const raw = String((this.settings as any)?.hero_media_type || '').trim().toLowerCase();
+    if (raw === 'video' || raw === 'gif' || raw === 'image') return raw;
+
+    const url = String((this.settings as any)?.hero_media_url || this.settings?.hero_image_url || '').toLowerCase();
+    if (url.endsWith('.mp4') || url.endsWith('.webm')) return 'video';
+    if (url.endsWith('.gif')) return 'gif';
+    return 'image';
+  }
+
+  getHeroMediaUrl(): string {
+    const url = String((this.settings as any)?.hero_media_url || this.settings?.hero_image_url || '').trim();
+    if (url) {
+      if (url.startsWith('http') || url.startsWith('data:') || url.startsWith('/assets/')) {
+        return url;
       }
-      return `${API_CONFIG.serverUrl}${this.settings.hero_image_url}`;
+      return `${API_CONFIG.serverUrl}${url}`;
     }
-    // Imagen por defecto si no hay nada configurado
     return 'https://images.unsplash.com/photo-1615397323891-b6aab016b801?q=80&w=2000&auto=format&fit=crop';
+  }
+
+  getHeroPosterUrl(): string {
+    // Para video, usar hero_image_url como poster si existe
+    if (this.getHeroMediaType() !== 'video') return '';
+    const url = String(this.settings?.hero_image_url || '').trim();
+    if (!url) return '';
+    if (url.startsWith('http') || url.startsWith('data:') || url.startsWith('/assets/')) return url;
+    return `${API_CONFIG.serverUrl}${url}`;
   }
 }

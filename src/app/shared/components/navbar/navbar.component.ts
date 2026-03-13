@@ -1,4 +1,4 @@
-import { Component, OnDestroy } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { RouterLink, Router, NavigationEnd } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -17,13 +17,15 @@ import { API_CONFIG } from '../../../core/config/api-config';
   templateUrl: './navbar.component.html',
   styleUrls: ['./navbar.component.css']
 })
-export class NavbarComponent {
+export class NavbarComponent implements OnInit, OnDestroy {
   cartItemCount$!: Observable<number>;
   favoritesCount$!: Observable<number>;
   settings: Settings | null = null;
   searchTerm = '';
   isAdminRoute = false;
+  mobileMenuOpen = false;
   private navSub?: Subscription;
+  private settingsSub?: Subscription;
 
   constructor(
     private cartService: CartService,
@@ -41,8 +43,15 @@ export class NavbarComponent {
   }
 
   ngOnInit() {
+    // Suscribirse a cambios para reflejar updates (ej. logo) sin recargar
+    this.settingsSub = this.settingsService.settings$.subscribe((s) => {
+      if (s) this.settings = s;
+    });
+
     this.settingsService.getSettings().subscribe({
-      next: (data) => this.settings = data,
+      next: (data) => {
+        this.settings = data;
+      },
       error: (err) => console.error('Error cargando configuraciones', err)
     });
 
@@ -51,11 +60,13 @@ export class NavbarComponent {
       .pipe(filter((e): e is NavigationEnd => e instanceof NavigationEnd))
       .subscribe((e) => {
         this.isAdminRoute = e.urlAfterRedirects.startsWith('/admin');
+        this.mobileMenuOpen = false;
       });
   }
 
   ngOnDestroy(): void {
     this.navSub?.unsubscribe();
+    this.settingsSub?.unsubscribe();
   }
 
   getLogoUrl(): string {
@@ -80,12 +91,23 @@ export class NavbarComponent {
 
   logout() {
     this.authService.logout();
+    this.mobileMenuOpen = false;
+  }
+
+  toggleMobileMenu(): void {
+    if (this.isAdminRoute) return;
+    this.mobileMenuOpen = !this.mobileMenuOpen;
+  }
+
+  closeMobileMenu(): void {
+    this.mobileMenuOpen = false;
   }
 
   onSearch() {
     if (this.searchTerm.trim()) {
       this.router.navigate(['/catalog'], { queryParams: { q: this.searchTerm.trim() }, queryParamsHandling: 'merge' });
       this.searchTerm = ''; // Limpiar input después de buscar
+      this.mobileMenuOpen = false;
     }
   }
 }

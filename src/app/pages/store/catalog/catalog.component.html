@@ -11,30 +11,42 @@
                     <span>Ver Todo</span>
                 </label>
             </li>
-            <li>
-                <label class="flex items-center space-x-3 cursor-pointer hover:text-gold transition-colors">
-                    <input type="radio" name="category" value="mujer" (change)="filterCategory('mujer')"
-                        [checked]="selectedCategory === 'mujer'"
-                        class="form-radio text-gold focus:ring-gold accent-gold w-4 h-4">
-                    <span>Para Mujer</span>
-                </label>
-            </li>
-            <li>
-                <label class="flex items-center space-x-3 cursor-pointer hover:text-gold transition-colors">
-                    <input type="radio" name="category" value="hombre" (change)="filterCategory('hombre')"
-                        [checked]="selectedCategory === 'hombre'"
-                        class="form-radio text-gold focus:ring-gold accent-gold w-4 h-4">
-                    <span>Para Hombre</span>
-                </label>
-            </li>
-            <li>
-                <label class="flex items-center space-x-3 cursor-pointer hover:text-gold transition-colors">
-                    <input type="radio" name="category" value="unisex" (change)="filterCategory('unisex')"
-                        [checked]="selectedCategory === 'unisex'"
-                        class="form-radio text-gold focus:ring-gold accent-gold w-4 h-4">
-                    <span>Unisex</span>
-                </label>
-            </li>
+            <ng-container *ngIf="categories.length; else fallbackCategories">
+                <li *ngFor="let c of categories">
+                    <label class="flex items-center space-x-3 cursor-pointer hover:text-gold transition-colors">
+                        <input type="radio" name="category" [value]="c.slug" (change)="filterCategory(c.slug)"
+                            [checked]="selectedCategory === c.slug"
+                            class="form-radio text-gold focus:ring-gold accent-gold w-4 h-4">
+                        <span>{{ c.nombre }}</span>
+                    </label>
+                </li>
+            </ng-container>
+            <ng-template #fallbackCategories>
+                <li>
+                    <label class="flex items-center space-x-3 cursor-pointer hover:text-gold transition-colors">
+                        <input type="radio" name="category" value="mujer" (change)="filterCategory('mujer')"
+                            [checked]="selectedCategory === 'mujer'"
+                            class="form-radio text-gold focus:ring-gold accent-gold w-4 h-4">
+                        <span>Para Mujer</span>
+                    </label>
+                </li>
+                <li>
+                    <label class="flex items-center space-x-3 cursor-pointer hover:text-gold transition-colors">
+                        <input type="radio" name="category" value="hombre" (change)="filterCategory('hombre')"
+                            [checked]="selectedCategory === 'hombre'"
+                            class="form-radio text-gold focus:ring-gold accent-gold w-4 h-4">
+                        <span>Para Hombre</span>
+                    </label>
+                </li>
+                <li>
+                    <label class="flex items-center space-x-3 cursor-pointer hover:text-gold transition-colors">
+                        <input type="radio" name="category" value="unisex" (change)="filterCategory('unisex')"
+                            [checked]="selectedCategory === 'unisex'"
+                            class="form-radio text-gold focus:ring-gold accent-gold w-4 h-4">
+                        <span>Unisex</span>
+                    </label>
+                </li>
+            </ng-template>
         </ul>
     </aside>
 
@@ -50,7 +62,8 @@
             {{ error }}
         </div>
 
-        <div *ngIf="!loading && !error" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-12">
+        <div *ngIf="!loading && !error"
+            class="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-4 gap-y-8 md:gap-x-8 md:gap-y-12">
             <app-product-card *ngFor="let product of filteredProducts" [product]="product"></app-product-card>
         </div>
 

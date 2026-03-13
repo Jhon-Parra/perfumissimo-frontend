@@ -5,7 +5,9 @@ import { Observable } from 'rxjs';
 export interface Product {
   id?: string;
   nombre: string;
-  genero?: 'mujer' | 'hombre' | 'unisex';
+  genero?: string;
+  categoria_nombre?: string | null;
+  categoria_slug?: string | null;
   descripcion: string;
   precio: number | string;
   precio_con_descuento?: number | string | null;
@@ -15,6 +17,7 @@ export interface Product {
   porcentaje_descuento?: number | null;
   tiene_promocion?: boolean;
   es_nuevo?: boolean;
+  nuevo_hasta?: string | null;
   stock: number;
   imagen_url?: string;
   unidades_vendidas?: number;

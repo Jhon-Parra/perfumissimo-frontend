@@ -63,6 +63,11 @@
           <button type="button" (click)="print()" class="border border-[#dcdcd4] bg-white text-charcoal px-6 py-3 font-bold text-xs tracking-widest uppercase hover:bg-gray-50 transition-colors">
             Imprimir
           </button>
+
+          <button *ngIf="order.codigo_transaccion && order.estado === 'PENDIENTE'" type="button" (click)="syncPayment()" [disabled]="syncingPayment"
+            class="border border-charcoal bg-white text-charcoal px-6 py-3 font-bold text-xs tracking-widest uppercase hover:bg-charcoal hover:text-white transition-colors disabled:opacity-50">
+            {{ syncingPayment ? 'Sincronizando...' : 'Actualizar estado' }}
+          </button>
         </div>
       </header>
 
@@ -81,6 +86,10 @@
             Método:
             <span *ngIf="order.codigo_transaccion; else cod">Pago en linea (Wompi)</span>
             <ng-template #cod>Pago contra entrega</ng-template>
+          </div>
+
+          <div *ngIf="order.codigo_transaccion && order.estado === 'PENDIENTE'" class="mt-4 text-xs text-gray-500">
+            Si pagaste con PSE o Nequi, espera la confirmacion. Si fue Nequi, revisa tu app y aprueba el pago.
           </div>
         </div>
       </section>
@@ -103,10 +112,25 @@
         </div>
 
         <div class="border-t border-gray-100 mt-6 pt-4">
+          <div *ngIf="order.subtotal_productos !== undefined" class="flex justify-between text-sm text-gray-500">
+            <span>Subtotal</span>
+            <span>{{ order.subtotal_productos | currency:'COP':'symbol-narrow':'1.0-0' }}</span>
+          </div>
+
           <div class="flex justify-between text-sm text-gray-500">
             <span>Envío</span>
             <span class="text-green-600 font-bold">GRATIS</span>
           </div>
+
+          <div *ngIf="order.envio_prioritario" class="flex justify-between text-sm text-gray-500 mt-2">
+            <span>Envio prioritario</span>
+            <span>{{ (order.costo_envio_prioritario || 0) | currency:'COP':'symbol-narrow':'1.0-0' }}</span>
+          </div>
+          <div *ngIf="order.perfume_lujo" class="flex justify-between text-sm text-gray-500 mt-2">
+            <span>Perfume de lujo</span>
+            <span>{{ (order.costo_perfume_lujo || 0) | currency:'COP':'symbol-narrow':'1.0-0' }}</span>
+          </div>
+
           <div class="flex justify-between text-lg font-bold text-charcoal mt-2">
             <span>TOTAL</span>
             <span>{{ order.total | currency:'COP':'symbol-narrow':'1.0-0' }}</span>
