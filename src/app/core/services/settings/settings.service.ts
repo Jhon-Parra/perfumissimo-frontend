@@ -20,6 +20,7 @@ export interface Settings {
     logo_height_desktop?: number | null;
 
     instagram_url?: string | null;
+    show_instagram_section?: boolean | null;
     instagram_feed_configured?: boolean;
     facebook_url?: string | null;
     tiktok_url?: string | null;
@@ -63,6 +64,21 @@ export interface Settings {
     // Nota: la llave publica no se expone por /settings (solo por /payments/wompi/config),
     // pero se deja en el tipo para uso del admin.
     wompi_public_key?: string | null;
+
+    alert_sales_delta_pct?: number | null;
+    alert_abandoned_delta_pct?: number | null;
+    alert_abandoned_value_threshold?: number | null;
+    alert_negative_reviews_threshold?: number | null;
+    alert_trend_growth_pct?: number | null;
+    alert_trend_min_units?: number | null;
+    alert_failed_login_threshold?: number | null;
+    alert_abandoned_hours?: number | null;
+
+    cart_recovery_enabled?: boolean | null;
+    cart_recovery_message?: string | null;
+    cart_recovery_discount_pct?: number | null;
+    cart_recovery_countdown_seconds?: number | null;
+    cart_recovery_button_text?: string | null;
 }
 
 @Injectable({

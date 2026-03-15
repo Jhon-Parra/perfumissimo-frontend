@@ -44,6 +44,8 @@ export class HomeComponent implements OnInit {
   instagramMedia: InstagramMediaItem[] = [];
   instagramLoading = true;
   instagramError = '';
+  showInstagramSection = true;
+  private instagramRequested = false;
 
   instagramUrl = '';
   instagramLabel = '@perfumissimo.col';
@@ -132,6 +134,11 @@ export class HomeComponent implements OnInit {
         this.promotions = (promos || [])
           .filter(p => {
             if (!p?.activo) return false;
+            const now = Date.now();
+            const start = new Date(p.fecha_inicio).getTime();
+            const end = new Date(p.fecha_fin).getTime();
+            if (!Number.isFinite(start) || !Number.isFinite(end)) return false;
+            if (start > now || end < now) return false;
             const t = typeOf(p);
             if (t === 'AMOUNT') return Number((p as any).amount_discount || 0) > 0;
             return Number(p.porcentaje_descuento || 0) > 0;
@@ -149,6 +156,31 @@ export class HomeComponent implements OnInit {
       }
     });
 
+    this.loadInstagramIfEnabled();
+  }
+
+  private applySettings(data: Settings): void {
+    this.settings = data;
+    this.showInstagramSection = (data as any)?.show_instagram_section !== false;
+    this.instagramUrl = this.normalizeInstagramUrl(this.settings?.instagram_url || '');
+    this.instagramLabel = this.buildInstagramLabel(this.instagramUrl, this.settings?.instagram_url || '');
+
+    this.facebookUrl = this.normalizeExternalUrl(this.settings?.facebook_url || '', 'facebook.com');
+    this.whatsappUrl = this.buildWhatsappUrl(this.settings?.whatsapp_number || '', this.settings?.whatsapp_message || '');
+    this.tiktokUrl = this.normalizeExternalUrl(this.settings?.tiktok_url || '', 'tiktok.com');
+
+    this.loadInstagramIfEnabled();
+  }
+
+  private loadInstagramIfEnabled(): void {
+    if (!this.showInstagramSection) {
+      this.instagramLoading = false;
+      this.instagramMedia = [];
+      this.instagramError = '';
+      return;
+    }
+    if (this.instagramRequested) return;
+    this.instagramRequested = true;
     this.instagramService.getMedia(12).subscribe({
       next: (res) => {
         const items = res?.items || [];
@@ -163,16 +195,6 @@ export class HomeComponent implements OnInit {
         this.instagramLoading = false;
       }
     });
-  }
-
-  private applySettings(data: Settings): void {
-    this.settings = data;
-    this.instagramUrl = this.normalizeInstagramUrl(this.settings?.instagram_url || '');
-    this.instagramLabel = this.buildInstagramLabel(this.instagramUrl, this.settings?.instagram_url || '');
-
-    this.facebookUrl = this.normalizeExternalUrl(this.settings?.facebook_url || '', 'facebook.com');
-    this.whatsappUrl = this.buildWhatsappUrl(this.settings?.whatsapp_number || '', this.settings?.whatsapp_message || '');
-    this.tiktokUrl = this.normalizeExternalUrl(this.settings?.tiktok_url || '', 'tiktok.com');
   }
 
   private configureHeroVideo(video: HTMLVideoElement): void {

@@ -8,6 +8,7 @@ import { CartService } from '../../../core/services/cart/cart.service';
 import { FavoritesService } from '../../../core/services/favorites/favorites.service';
 import { ReviewService, ProductReview, ProductReviewSummary } from '../../../core/services/review/review.service';
 import { SeoService } from '../../../core/services/seo/seo.service';
+import { AnalyticsService } from '../../../core/services/analytics/analytics.service';
 
 import { Product as CardProduct } from '../../../shared/components/product-card/product-card.component';
 import { ProductCardComponent } from '../../../shared/components/product-card/product-card.component';
@@ -42,7 +43,8 @@ export class ProductDetailComponent implements OnDestroy {
     private cartService: CartService,
     private favoritesService: FavoritesService,
     private reviewService: ReviewService,
-    private seo: SeoService
+    private seo: SeoService,
+    private analyticsService: AnalyticsService
   ) {}
 
   ngOnDestroy(): void {
@@ -102,6 +104,9 @@ export class ProductDetailComponent implements OnDestroy {
 
         // Relacionados
         this.loadRelated(String(p.id || id));
+
+        // Tracking de vista
+        this.analyticsService.trackProductView(String(p.id || id));
       },
       error: (err) => {
         console.error('Error loading product:', err);

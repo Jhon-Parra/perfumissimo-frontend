@@ -31,7 +31,7 @@ export class PromotionsStoreComponent implements OnInit {
     this.promotionService.getPromotions().subscribe({
       next: (rows) => {
         const list = rows || [];
-        this.promotions = list;
+        this.promotions = list.filter((p) => this.isActiveNow(p));
         this.loading = false;
       },
       error: (err) => {
@@ -56,5 +56,12 @@ export class PromotionsStoreComponent implements OnInit {
   getPercentOff(p: Promotion): number {
     const n = Number((p as any)?.porcentaje_descuento || 0);
     return Number.isFinite(n) ? n : 0;
+  }
+
+  private isActiveNow(p: Promotion): boolean {
+    const now = Date.now();
+    const start = new Date(p.fecha_inicio).getTime();
+    const end = new Date(p.fecha_fin).getTime();
+    return !!p.activo && Number.isFinite(start) && Number.isFinite(end) && start <= now && end >= now;
   }
 }

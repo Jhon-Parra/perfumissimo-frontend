@@ -35,3 +35,21 @@
 .review-card-premium:hover {
     @apply transform -translate-y-1;
 }
+
+.animate-fade-in {
+    animation: fadeIn 1s ease-out forwards;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 0.6;
+    }
+}
+
+.animate-fade-in:hover {
+    opacity: 1 !important;
+}

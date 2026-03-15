@@ -39,6 +39,28 @@ export class CheckoutComponent implements OnInit, OnDestroy {
     errorMsg = '';
     private attemptedRefresh = false;
 
+    cartRecoveryEnabled = false;
+    cartRecoveryMessage = '¡Espera! No te vayas todavía. Completa tu compra ahora y obtén un 10% de descuento exclusivo por tiempo limitado.';
+    cartRecoveryDiscountPct = 10;
+    cartRecoveryCountdownSeconds = 120;
+    cartRecoveryButtonText = 'Finalizar compra';
+    showCartRecovery = false;
+    cartRecoveryRemaining = 0;
+    cartRecoveryApplied = false;
+    cartRecoveryDiscountAmount = 0;
+    showClearCartConfirm = false;
+    private cartRecoveryTimer?: any;
+    private exitIntentHandler?: (event: MouseEvent) => void;
+    private cartRecoveryPendingAction: 'cancel' | 'clear' | null = null;
+    private readonly cartRecoveryStoragePrefix = 'perfumissimo_cart_recovery';
+    private readonly cartRecoveryTtlMs = 5 * 60 * 60 * 1000;
+    private cartRecoveryExpiryTimer?: any;
+    private cartRecoveryAppliedAt = 0;
+    cartRecoveryExpiredNotice = false;
+    cartRecoveryExpiredMessage = 'El descuento de recuperacion expiro.';
+    private cartRecoveryExpiredNotified = false;
+    private readonly cartRecoveryExpiredNoticeKey = 'perfumissimo_cart_recovery_expired_notice_shown';
+
     paymentMethod: 'WOMPI_PSE' | 'WOMPI_NEQUI' | 'WOMPI_CARD' = 'WOMPI_PSE';
 
     wompiAcceptanceToken = '';
@@ -121,6 +143,8 @@ export class CheckoutComponent implements OnInit, OnDestroy {
             this.envioPrioritarioPrecio = Number((s as any).envio_prioritario_precio || 0) || 0;
             this.perfumeLujoPrecio = Number((s as any).perfume_lujo_precio || 0) || 0;
 
+            this.applyCartRecoverySettings(s);
+
             const envioImg = String((s as any).envio_prioritario_image_url || '').trim();
             const lujoImg = String((s as any).perfume_lujo_image_url || '').trim();
             if (envioImg) this.priorityShippingImg = envioImg;
@@ -133,6 +157,8 @@ export class CheckoutComponent implements OnInit, OnDestroy {
             next: (s: Settings) => {
                 this.envioPrioritarioPrecio = Number((s as any).envio_prioritario_precio || 0) || 0;
                 this.perfumeLujoPrecio = Number((s as any).perfume_lujo_precio || 0) || 0;
+
+                this.applyCartRecoverySettings(s);
 
                 const envioImg = String((s as any).envio_prioritario_image_url || '').trim();
                 const lujoImg = String((s as any).perfume_lujo_image_url || '').trim();
@@ -149,6 +175,12 @@ export class CheckoutComponent implements OnInit, OnDestroy {
         if (this.paymentMethod === 'WOMPI_PSE') {
             this.loadWompiData();
         }
+
+        this.setupExitIntent();
+
+        this.cartRecoveryApplied = this.getRecoveryApplied();
+        this.scheduleRecoveryExpiryCheck();
+        this.recalcTotals();
     }
 
     ngOnDestroy(): void {
@@ -157,6 +189,281 @@ export class CheckoutComponent implements OnInit, OnDestroy {
         } catch {
             // ignore
         }
+
+        if (this.exitIntentHandler) {
+            document.removeEventListener('mouseout', this.exitIntentHandler);
+        }
+        if (this.cartRecoveryTimer) {
+            clearInterval(this.cartRecoveryTimer);
+            this.cartRecoveryTimer = undefined;
+        }
+        if (this.cartRecoveryExpiryTimer) {
+            clearTimeout(this.cartRecoveryExpiryTimer);
+            this.cartRecoveryExpiryTimer = undefined;
+        }
+    }
+
+    private applyCartRecoverySettings(s: Settings): void {
+        this.cartRecoveryEnabled = !!s.cart_recovery_enabled;
+        this.cartRecoveryMessage = String(s.cart_recovery_message || this.cartRecoveryMessage);
+        this.cartRecoveryDiscountPct = Number(s.cart_recovery_discount_pct ?? this.cartRecoveryDiscountPct) || this.cartRecoveryDiscountPct;
+        this.cartRecoveryCountdownSeconds = Number(s.cart_recovery_countdown_seconds ?? this.cartRecoveryCountdownSeconds) || this.cartRecoveryCountdownSeconds;
+        this.cartRecoveryButtonText = String(s.cart_recovery_button_text || this.cartRecoveryButtonText);
+    }
+
+    private setupExitIntent(): void {
+        if (this.exitIntentHandler) return;
+        this.exitIntentHandler = (event: MouseEvent) => {
+            if (!this.cartRecoveryEnabled) return;
+            if (this.showCartRecovery) return;
+            if (this.orderSuccess) return;
+        if (!this.cartItems || this.cartItems.length === 0) return;
+        if (this.cartRecoveryApplied) return;
+        const shown = this.getRecoveryShown();
+        if (shown) return;
+
+            const related = (event as any).relatedTarget;
+            if (related) return;
+            if (event.clientY > 0) return;
+
+            this.openCartRecovery();
+        };
+
+        document.addEventListener('mouseout', this.exitIntentHandler);
+    }
+
+    private openCartRecovery(): void {
+        this.showCartRecovery = true;
+        this.cartRecoveryRemaining = Math.max(10, Math.floor(this.cartRecoveryCountdownSeconds || 0));
+        this.setRecoveryShown();
+
+        if (this.cartRecoveryTimer) {
+            clearInterval(this.cartRecoveryTimer);
+        }
+
+        this.cartRecoveryTimer = setInterval(() => {
+            this.cartRecoveryRemaining = Math.max(0, this.cartRecoveryRemaining - 1);
+            if (this.cartRecoveryRemaining <= 0) {
+                this.closeCartRecovery();
+            }
+        }, 1000);
+    }
+
+    closeCartRecovery(): void {
+        this.showCartRecovery = false;
+        const pending = this.cartRecoveryPendingAction;
+        this.cartRecoveryPendingAction = null;
+        if (this.cartRecoveryTimer) {
+            clearInterval(this.cartRecoveryTimer);
+            this.cartRecoveryTimer = undefined;
+        }
+
+        if (pending === 'clear') {
+            this.cartService.clearCart();
+        }
+        if (pending === 'cancel') {
+            this.router.navigate(['/catalog']);
+        }
+    }
+
+    onCartRecoveryAction(): void {
+        this.cartRecoveryApplied = true;
+        this.setRecoveryApplied();
+        this.cartRecoveryPendingAction = null;
+        this.cartRecoveryExpiredNotice = false;
+        this.recalcTotals();
+        this.closeCartRecovery();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    private getRecoveryStorageKey(suffix: 'applied' | 'shown'): string {
+        const userId = this.authService.getUserId();
+        return `${this.cartRecoveryStoragePrefix}_${suffix}_${userId || 'guest'}`;
+    }
+
+    private expireRecoveryDiscount(): void {
+        this.clearRecoveryState();
+        this.cartRecoveryApplied = false;
+        if (!this.cartRecoveryExpiredNotified) {
+            this.cartRecoveryExpiredNotice = true;
+            this.cartRecoveryExpiredNotified = true;
+            try {
+                sessionStorage.setItem(this.cartRecoveryExpiredNoticeKey, '1');
+            } catch {
+                // ignore
+            }
+        }
+        this.recalcTotals();
+    }
+
+    private scheduleRecoveryExpiryCheck(): void {
+        if (this.cartRecoveryExpiryTimer) {
+            clearTimeout(this.cartRecoveryExpiryTimer);
+            this.cartRecoveryExpiryTimer = undefined;
+        }
+
+        if (!this.cartRecoveryApplied || !this.cartRecoveryAppliedAt) return;
+
+        const remaining = (this.cartRecoveryAppliedAt + this.cartRecoveryTtlMs) - Date.now();
+        if (remaining <= 0) {
+            this.expireRecoveryDiscount();
+            return;
+        }
+
+        this.cartRecoveryExpiryTimer = setTimeout(() => {
+            this.expireRecoveryDiscount();
+        }, remaining);
+    }
+
+    private getRecoveryApplied(): boolean {
+        const key = this.getRecoveryStorageKey('applied');
+        try {
+            try {
+                this.cartRecoveryExpiredNotified = sessionStorage.getItem(this.cartRecoveryExpiredNoticeKey) === '1';
+            } catch {
+                this.cartRecoveryExpiredNotified = false;
+            }
+            const raw = localStorage.getItem(key);
+            if (!raw) return false;
+            const parsed = JSON.parse(raw);
+            const applied = parsed?.applied === true;
+            const appliedAt = Number(parsed?.appliedAt || 0);
+            if (!applied || !Number.isFinite(appliedAt) || appliedAt <= 0) {
+                localStorage.removeItem(key);
+                return false;
+            }
+            if (Date.now() - appliedAt > this.cartRecoveryTtlMs) {
+                localStorage.removeItem(key);
+                if (!this.cartRecoveryExpiredNotified) {
+                    this.cartRecoveryExpiredNotice = true;
+                    this.cartRecoveryExpiredNotified = true;
+                    try {
+                        sessionStorage.setItem(this.cartRecoveryExpiredNoticeKey, '1');
+                    } catch {
+                        // ignore
+                    }
+                }
+                return false;
+            }
+            this.cartRecoveryAppliedAt = appliedAt;
+            return true;
+        } catch {
+            return false;
+        }
+    }
+
+    private setRecoveryApplied(): void {
+        const key = this.getRecoveryStorageKey('applied');
+        try {
+            const appliedAt = Date.now();
+            this.cartRecoveryAppliedAt = appliedAt;
+            localStorage.setItem(key, JSON.stringify({ applied: true, appliedAt }));
+            this.scheduleRecoveryExpiryCheck();
+        } catch {
+            // ignore
+        }
+    }
+
+    private clearRecoveryState(): void {
+        const appliedKey = this.getRecoveryStorageKey('applied');
+        const shownKey = this.getRecoveryStorageKey('shown');
+        try {
+            localStorage.removeItem(appliedKey);
+        } catch {
+            // ignore
+        }
+        try {
+            sessionStorage.removeItem(shownKey);
+        } catch {
+            // ignore
+        }
+        try {
+            sessionStorage.removeItem(this.cartRecoveryExpiredNoticeKey);
+        } catch {
+            // ignore
+        }
+        this.cartRecoveryAppliedAt = 0;
+        this.cartRecoveryExpiredNotified = false;
+        if (this.cartRecoveryExpiryTimer) {
+            clearTimeout(this.cartRecoveryExpiryTimer);
+            this.cartRecoveryExpiryTimer = undefined;
+        }
+    }
+
+    private getRecoveryShown(): boolean {
+        const key = this.getRecoveryStorageKey('shown');
+        try {
+            return sessionStorage.getItem(key) === '1';
+        } catch {
+            return false;
+        }
+    }
+
+    private setRecoveryShown(): void {
+        const key = this.getRecoveryStorageKey('shown');
+        try {
+            sessionStorage.setItem(key, '1');
+        } catch {
+            // ignore
+        }
+    }
+
+    removeItem(item: CartItem): void {
+        if (!item?.product?.id) return;
+        const name = item.product?.name || item.product?.nombre || 'este producto';
+        const ok = window.confirm(`¿Eliminar ${name} del carrito?`);
+        if (!ok) return;
+        this.cartService.removeFromCart(item.product.id);
+    }
+
+    cancelPurchase(): void {
+        if (this.cartRecoveryEnabled && this.cartItems.length > 0 && !this.cartRecoveryApplied) {
+            this.cartRecoveryPendingAction = 'cancel';
+            this.openCartRecovery();
+            return;
+        }
+        this.router.navigate(['/catalog']);
+    }
+
+    clearCart(): void {
+        if (this.cartRecoveryEnabled && this.cartItems.length > 0 && !this.cartRecoveryApplied) {
+            this.cartRecoveryPendingAction = 'clear';
+            this.openCartRecovery();
+            return;
+        }
+        this.openClearCartConfirm();
+    }
+
+    private openClearCartConfirm(): void {
+        this.showClearCartConfirm = true;
+    }
+
+    closeClearCartConfirm(): void {
+        this.showClearCartConfirm = false;
+    }
+
+    confirmClearCart(): void {
+        this.showClearCartConfirm = false;
+        this.cartService.clearCart();
+    }
+
+    updateQuantity(item: CartItem, delta: number): void {
+        if (!item?.product?.id) return;
+        const next = Math.max(1, (item.quantity || 1) + delta);
+        this.cartService.updateQuantity(item.product.id, next);
+    }
+
+    setQuantity(item: CartItem, value: string): void {
+        if (!item?.product?.id) return;
+        const n = Math.max(1, Math.trunc(Number(value || 1)));
+        this.cartService.updateQuantity(item.product.id, n);
+    }
+
+    get cartRecoveryCountdownLabel(): string {
+        const total = Math.max(0, this.cartRecoveryRemaining || 0);
+        const min = Math.floor(total / 60).toString().padStart(2, '0');
+        const sec = Math.floor(total % 60).toString().padStart(2, '0');
+        return `${min}:${sec}`;
     }
 
     onToggleExtras(): void {
@@ -167,7 +474,9 @@ export class CheckoutComponent implements OnInit, OnDestroy {
         const ep = this.envioPrioritario ? Math.max(0, Number(this.envioPrioritarioPrecio || 0)) : 0;
         const pl = this.perfumeLujo ? Math.max(0, Number(this.perfumeLujoPrecio || 0)) : 0;
         this.extrasTotal = ep + pl;
-        this.grandTotal = this.cartTotal + this.extrasTotal;
+        const pct = Math.max(0, Math.min(80, Number(this.cartRecoveryDiscountPct || 0)));
+        this.cartRecoveryDiscountAmount = this.cartRecoveryApplied ? Math.round((this.cartTotal * (pct / 100)) * 100) / 100 : 0;
+        this.grandTotal = Math.max(0, this.cartTotal - this.cartRecoveryDiscountAmount) + this.extrasTotal;
     }
 
     private svgToDataUrl(svg: string): string {
@@ -365,6 +674,7 @@ export class CheckoutComponent implements OnInit, OnDestroy {
             this.wompiService.createCardCheckout(payload as any).subscribe({
                 next: (res) => {
                     this.isPlacingOrder = false;
+                    this.clearRecoveryState();
                     this.cartService.clearCart();
                     this.router.navigate(['/order-success', res.orderId]);
                 },
@@ -456,12 +766,13 @@ export class CheckoutComponent implements OnInit, OnDestroy {
         };
 
         this.wompiService.createNequiCheckout(payload as any).subscribe({
-            next: (res) => {
-                this.isPlacingOrder = false;
-                this.cartService.clearCart();
-                // Nequi no requiere redireccion: queda en verificacion.
-                this.router.navigate(['/order-success', res.orderId]);
-            },
+                next: (res) => {
+                    this.isPlacingOrder = false;
+                    this.clearRecoveryState();
+                    this.cartService.clearCart();
+                    // Nequi no requiere redireccion: queda en verificacion.
+                    this.router.navigate(['/order-success', res.orderId]);
+                },
             error: (err) => {
                 console.error('Error creando checkout Nequi:', err);
                 const status = err?.status;
@@ -515,13 +826,14 @@ export class CheckoutComponent implements OnInit, OnDestroy {
         };
 
         this.wompiService.createPseCheckout(payload as any).subscribe({
-            next: (res) => {
-                this.isPlacingOrder = false;
-                // La orden ya fue creada (y se reservo stock). Evitar duplicados en el carrito.
-                this.cartService.clearCart();
-                // Redirigir a PSE (Wompi)
-                window.location.href = res.asyncPaymentUrl;
-            },
+                next: (res) => {
+                    this.isPlacingOrder = false;
+                    // La orden ya fue creada (y se reservo stock). Evitar duplicados en el carrito.
+                    this.clearRecoveryState();
+                    this.cartService.clearCart();
+                    // Redirigir a PSE (Wompi)
+                    window.location.href = res.asyncPaymentUrl;
+                },
             error: (err) => {
                 console.error('Error creando checkout PSE:', err);
                 const status = err?.status;
@@ -553,6 +865,9 @@ export class CheckoutComponent implements OnInit, OnDestroy {
                 quantity: item.quantity,
                 price: Number(item.product.price)
             })),
+            cart_session_id: this.cartService.getCartSessionId(),
+            cart_recovery_applied: this.cartRecoveryApplied,
+            cart_recovery_discount_pct: this.cartRecoveryApplied ? this.cartRecoveryDiscountPct : 0,
             envio_prioritario: this.envioPrioritario,
             perfume_lujo: this.perfumeLujo
         };
@@ -564,6 +879,7 @@ export class CheckoutComponent implements OnInit, OnDestroy {
         this.orderService.createOrder(orderData).subscribe({
             next: (response) => {
                 this.createdOrderId = response.orderId;
+                this.clearRecoveryState();
                 this.cartService.clearCart();
                 this.isPlacingOrder = false;
                 this.router.navigate(['/order-success', response.orderId]);

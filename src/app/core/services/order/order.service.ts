@@ -13,6 +13,10 @@ export interface CreateOrderDto {
   shipping_address: string;
   items: CartItemForOrder[];
   transaction_code?: string;
+  cart_session_id?: string;
+
+  cart_recovery_applied?: boolean;
+  cart_recovery_discount_pct?: number;
 
   envio_prioritario?: boolean;
   perfume_lujo?: boolean;

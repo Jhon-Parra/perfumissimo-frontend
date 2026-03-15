@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { Product } from '../../../shared/components/product-card/product-card.component';
+import { AnalyticsService, CartSnapshotItem } from '../analytics/analytics.service';
 
 export interface CartItem {
   product: Product;
@@ -13,8 +14,9 @@ export interface CartItem {
 export class CartService {
   private itemsSubject = new BehaviorSubject<CartItem[]>([]);
   public items$: Observable<CartItem[]> = this.itemsSubject.asObservable();
+  private trackTimer: any;
 
-  constructor() {
+  constructor(private analyticsService: AnalyticsService) {
     this.loadCart();
   }
 
@@ -58,6 +60,10 @@ export class CartService {
     this.updateCart([]);
   }
 
+  getCartSessionId(): string {
+    return this.analyticsService.getSessionId();
+  }
+
   clearCartStorage(): void {
     this.itemsSubject.next([]);
     try {
@@ -78,6 +84,24 @@ export class CartService {
   private updateCart(items: CartItem[]): void {
     this.itemsSubject.next(items);
     localStorage.setItem('perfumissimo_cart', JSON.stringify(items));
+    this.scheduleCartTracking(items);
+  }
+
+  private scheduleCartTracking(items: CartItem[]): void {
+    if (this.trackTimer) {
+      clearTimeout(this.trackTimer);
+    }
+
+    this.trackTimer = setTimeout(() => {
+      const snapshot: CartSnapshotItem[] = (items || []).map((item) => ({
+        product_id: item.product.id,
+        name: item.product.name,
+        price: Number(item.product.price || 0),
+        quantity: Number(item.quantity || 0)
+      }));
+      const total = snapshot.reduce((sum, it) => sum + (it.price * it.quantity), 0);
+      this.analyticsService.trackCartSnapshot(snapshot, total);
+    }, 700);
   }
 
   private loadCart(): void {

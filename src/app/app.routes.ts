@@ -104,6 +104,18 @@ export const routes: Routes = [
         data: { roles: ['SUPERADMIN'] }
     },
     {
+        path: 'admin/intelligence',
+        loadComponent: () => import('./pages/admin/intelligence-alerts/intelligence-alerts.component').then(m => m.IntelligenceAlertsComponent),
+        canActivate: [authGuard, roleGuard],
+        data: { permission: 'admin.dashboard' }
+    },
+    {
+        path: 'admin/cart-recovery',
+        loadComponent: () => import('./pages/admin/cart-recovery/cart-recovery.component').then(m => m.CartRecoveryComponent),
+        canActivate: [authGuard, roleGuard],
+        data: { permission: 'admin.settings' }
+    },
+    {
         path: 'access-denied',
         loadComponent: () => import('./pages/access-denied/access-denied.component').then(m => m.AccessDeniedComponent)
     },

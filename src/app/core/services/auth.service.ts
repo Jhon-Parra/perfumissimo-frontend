@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, tap, BehaviorSubject } from 'rxjs';
+import { Observable, tap, BehaviorSubject, catchError, of } from 'rxjs';
 import { Router } from '@angular/router';
 import { CartService } from './cart/cart.service';
 import { FavoritesService } from './favorites/favorites.service';
@@ -112,6 +112,11 @@ export class AuthService {
             this.currentUserSubject.next(null);
             try { localStorage.removeItem('perfumissimo_permissions_me_v1'); } catch {}
           }
+        }),
+        catchError(() => {
+          this.currentUserSubject.next(null);
+          try { localStorage.removeItem('perfumissimo_permissions_me_v1'); } catch {}
+          return of({ user: null });
         })
       );
   }

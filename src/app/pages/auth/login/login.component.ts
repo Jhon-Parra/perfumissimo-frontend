@@ -1,8 +1,9 @@
-import { Component, OnInit, NgZone } from '@angular/core';
+import { Component, OnInit, NgZone, AfterViewInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
+import { API_CONFIG } from '../../../core/config/api-config';
 
 declare var google: any;
 
@@ -13,7 +14,11 @@ declare var google: any;
   templateUrl: './login.component.html',
   styleUrls: ['./login.component.css']
 })
-export class LoginComponent implements OnInit {
+export class LoginComponent implements OnInit, AfterViewInit, OnDestroy {
+  private static gsiInitialized = false;
+  private static gsiRendered = false;
+  private gsiRetryTimer?: any;
+  private gsiInitAttempts = 0;
   credentials = { email: '', password: '' };
   registerData = { nombre: '', apellido: '', telefono: '', email: '', password: '' };
   isLoginMode = true;
@@ -27,22 +32,81 @@ export class LoginComponent implements OnInit {
     private ngZone: NgZone
   ) { }
 
-  ngOnInit(): void {
-    if (typeof google !== 'undefined') {
+  ngOnInit(): void {}
+
+  ngAfterViewInit(): void {
+    this.ensureGoogleButton();
+  }
+
+  ngOnDestroy(): void {
+    if (this.gsiRetryTimer) {
+      clearTimeout(this.gsiRetryTimer);
+      this.gsiRetryTimer = undefined;
+    }
+  }
+
+  private ensureGoogleButton(): void {
+    this.gsiInitAttempts += 1;
+
+    if (typeof google === 'undefined') {
+      this.loadGoogleScript().then(() => this.ensureGoogleButton());
+      this.scheduleRetry();
+      return;
+    }
+
+    if (!LoginComponent.gsiInitialized) {
       google.accounts.id.initialize({
-        client_id: '129037757547-mvt7e9b254t59dc4s7mu8vnth62lf7lr.apps.googleusercontent.com',
+        client_id: API_CONFIG.googleClientId,
         callback: this.handleGoogleResponse.bind(this)
       });
+      LoginComponent.gsiInitialized = true;
+    }
+
+    const buttonHost = document.getElementById('google-btn');
+    if (!buttonHost) {
+      this.scheduleRetry();
+      return;
+    }
+
+    if (!LoginComponent.gsiRendered || !buttonHost.hasChildNodes()) {
       google.accounts.id.renderButton(
-        document.getElementById("google-btn"),
+        buttonHost,
         {
-          theme: "outline",
-          size: "large",
+          theme: 'outline',
+          size: 'large',
           width: 320,
-          type: "standard"
+          type: 'standard'
         }
       );
+      LoginComponent.gsiRendered = true;
     }
+  }
+
+  private scheduleRetry(): void {
+    if (this.gsiInitAttempts >= 20) return;
+    if (this.gsiRetryTimer) return;
+    this.gsiRetryTimer = setTimeout(() => {
+      this.gsiRetryTimer = undefined;
+      this.ensureGoogleButton();
+    }, 150);
+  }
+
+  private loadGoogleScript(): Promise<void> {
+    return new Promise((resolve) => {
+      if (document.getElementById('google-gsi')) {
+        resolve();
+        return;
+      }
+
+      const script = document.createElement('script');
+      script.id = 'google-gsi';
+      script.src = 'https://accounts.google.com/gsi/client';
+      script.async = true;
+      script.defer = true;
+      script.onload = () => resolve();
+      script.onerror = () => resolve();
+      document.head.appendChild(script);
+    });
   }
 
   handleGoogleResponse(response: any) {

@@ -5,6 +5,7 @@ import { ProductCardComponent, Product } from '../../../shared/components/produc
 import { ProductService } from '../../../core/services/product/product.service';
 import { SeoService } from '../../../core/services/seo/seo.service';
 import { CategoryService, Category } from '../../../core/services/category/category.service';
+import { AnalyticsService } from '../../../core/services/analytics/analytics.service';
 
 @Component({
   selector: 'app-catalog',
@@ -20,6 +21,7 @@ export class CatalogComponent implements OnInit {
   selectedCategory = 'todos';
   searchTerm = '';
   selectedPromotionId = '';
+  private lastTrackedSearch = '';
 
 
   categories: Category[] = [];
@@ -29,7 +31,8 @@ export class CatalogComponent implements OnInit {
     private categoryService: CategoryService,
     private route: ActivatedRoute,
     private router: Router,
-    private seo: SeoService
+    private seo: SeoService,
+    private analyticsService: AnalyticsService
   ) { }
 
   ngOnInit(): void {
@@ -75,6 +78,14 @@ export class CatalogComponent implements OnInit {
           this.selectedCategory = params['category'] || 'todos';
           this.selectedPromotionId = params['promo'] || '';
           this.applyFilters();
+
+          const searchKey = `${this.searchTerm}|${this.selectedCategory}|${this.selectedPromotionId}`;
+          const trimmed = String(this.searchTerm || '').trim();
+          if (trimmed && searchKey !== this.lastTrackedSearch) {
+            const ids = (this.filteredProducts || []).slice(0, 10).map(p => p.id).filter(Boolean);
+            this.analyticsService.trackSearch(trimmed, ids, this.filteredProducts.length);
+            this.lastTrackedSearch = searchKey;
+          }
 
           const parts: string[] = [];
           if (this.selectedCategory && this.selectedCategory !== 'todos') {

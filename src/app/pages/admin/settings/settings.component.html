@@ -46,6 +46,21 @@
                 </svg>
                 <span>Promociones</span>
             </a>
+            <a routerLink="/admin/cart-recovery"
+                class="flex items-center space-x-3 p-3 rounded-md hover:bg-gray-800 transition-colors">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13l-1.2 6h12.4M9 21a1 1 0 100-2 1 1 0 000 2zm8 0a1 1 0 100-2 1 1 0 000 2z" />
+                </svg>
+                <span>Recuperación de carrito</span>
+            </a>
+            <a routerLink="/admin/intelligence"
+                class="flex items-center space-x-3 p-3 rounded-md hover:bg-gray-800 transition-colors">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M9.663 17h4.674M12 3v2m0 14v2m7-9h2M3 12H1m15.364-6.364 1.414-1.414M6.222 17.778l-1.414 1.414m12.728 0-1.414-1.414M6.222 6.222 4.808 4.808M12 7a5 5 0 100 10 5 5 0 000-10z" />
+                </svg>
+                <span>Inteligencia y Alertas</span>
+            </a>
             <a routerLink="/admin/orders"
                 class="flex items-center space-x-3 p-3 rounded-md hover:bg-gray-800 transition-colors">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -123,6 +138,8 @@
                     <a routerLink="/admin/categories" class="px-3 py-2 text-[11px] uppercase tracking-widest font-bold border border-[#dcdcd4] bg-white rounded-md">Categorias</a>
                     <a routerLink="/admin/orders" class="px-3 py-2 text-[11px] uppercase tracking-widest font-bold border border-[#dcdcd4] bg-white rounded-md">Pedidos</a>
                     <a routerLink="/admin/promotions" class="px-3 py-2 text-[11px] uppercase tracking-widest font-bold border border-[#dcdcd4] bg-white rounded-md">Promos</a>
+                    <a routerLink="/admin/cart-recovery" class="px-3 py-2 text-[11px] uppercase tracking-widest font-bold border border-[#dcdcd4] bg-white rounded-md">Recuperación</a>
+                    <a routerLink="/admin/intelligence" class="px-3 py-2 text-[11px] uppercase tracking-widest font-bold border border-[#dcdcd4] bg-white rounded-md">Inteligencia</a>
                     <a routerLink="/admin/payments" class="px-3 py-2 text-[11px] uppercase tracking-widest font-bold border border-[#dcdcd4] bg-white rounded-md">Pagos</a>
                     <a routerLink="/admin/emails" class="px-3 py-2 text-[11px] uppercase tracking-widest font-bold border border-[#dcdcd4] bg-white rounded-md">Correos</a>
                     <a routerLink="/admin/settings" class="px-3 py-2 text-[11px] uppercase tracking-widest font-bold border border-[#dcdcd4] bg-white rounded-md">Apariencia</a>
@@ -336,6 +353,57 @@
                 </div>
             </div>
 
+            <div class="bg-white rounded-xl shadow-sm border border-[#ecece5] p-6">
+                <h3 class="font-serif text-xl border-b border-[#ecece5] pb-4 mb-6">Inteligencia y Alertas</h3>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-bold text-soft-charcoal tracking-widest uppercase mb-2">Variacion ventas (%)</label>
+                        <input type="number" min="0" max="100" [(ngModel)]="settings.alert_sales_delta_pct"
+                            class="w-full border border-[#ecece5] rounded-md px-4 py-2 text-sm focus:ring-gold focus:border-gold outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-bold text-soft-charcoal tracking-widest uppercase mb-2">Variacion carritos (%)</label>
+                        <input type="number" min="0" max="100" [(ngModel)]="settings.alert_abandoned_delta_pct"
+                            class="w-full border border-[#ecece5] rounded-md px-4 py-2 text-sm focus:ring-gold focus:border-gold outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-bold text-soft-charcoal tracking-widest uppercase mb-2">Umbral valor perdido</label>
+                        <input type="number" min="0" step="1000" [(ngModel)]="settings.alert_abandoned_value_threshold"
+                            class="w-full border border-[#ecece5] rounded-md px-4 py-2 text-sm focus:ring-gold focus:border-gold outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-bold text-soft-charcoal tracking-widest uppercase mb-2">Resenas negativas (min)</label>
+                        <input type="number" min="1" max="50" [(ngModel)]="settings.alert_negative_reviews_threshold"
+                            class="w-full border border-[#ecece5] rounded-md px-4 py-2 text-sm focus:ring-gold focus:border-gold outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-bold text-soft-charcoal tracking-widest uppercase mb-2">Crecimiento tendencia (%)</label>
+                        <input type="number" min="0" max="300" [(ngModel)]="settings.alert_trend_growth_pct"
+                            class="w-full border border-[#ecece5] rounded-md px-4 py-2 text-sm focus:ring-gold focus:border-gold outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-bold text-soft-charcoal tracking-widest uppercase mb-2">Minimo unidades tendencia</label>
+                        <input type="number" min="1" max="2000" [(ngModel)]="settings.alert_trend_min_units"
+                            class="w-full border border-[#ecece5] rounded-md px-4 py-2 text-sm focus:ring-gold focus:border-gold outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-bold text-soft-charcoal tracking-widest uppercase mb-2">Intentos fallidos (min)</label>
+                        <input type="number" min="3" max="50" [(ngModel)]="settings.alert_failed_login_threshold"
+                            class="w-full border border-[#ecece5] rounded-md px-4 py-2 text-sm focus:ring-gold focus:border-gold outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-bold text-soft-charcoal tracking-widest uppercase mb-2">Horas para abandono</label>
+                        <input type="number" min="1" max="240" [(ngModel)]="settings.alert_abandoned_hours"
+                            class="w-full border border-[#ecece5] rounded-md px-4 py-2 text-sm focus:ring-gold focus:border-gold outline-none">
+                    </div>
+                </div>
+
+                <div class="text-xs text-soft-charcoal bg-cream border border-[#ecece5] rounded-md p-4 mt-6">
+                    Ajusta estos valores para controlar cuando se generan alertas automaticas en el panel.
+                </div>
+            </div>
+
             <!-- Social Settings -->
             <div class="bg-white rounded-xl shadow-sm border border-[#ecece5] p-6">
                 <h3 class="font-serif text-xl border-b border-[#ecece5] pb-4 mb-6">Redes Sociales</h3>
@@ -346,6 +414,17 @@
                         <input type="text" [(ngModel)]="settings.instagram_url"
                             placeholder="https://instagram.com/perfumissimo.col"
                             class="w-full border border-[#ecece5] rounded-md px-4 py-2 text-sm focus:ring-gold focus:border-gold outline-none">
+                    </div>
+
+                    <div class="flex items-center justify-between gap-4 rounded-md border border-[#ecece5] px-4 py-3">
+                        <div>
+                            <div class="text-sm font-bold text-soft-charcoal tracking-widest uppercase">Mostrar sección Instagram</div>
+                            <div class="text-xs text-gray-500 mt-1">Controla si aparece la sección en el home.</div>
+                        </div>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" [(ngModel)]="settings.show_instagram_section" class="sr-only peer">
+                            <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-gold/30 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-gold"></div>
+                        </label>
                     </div>
 
                     <div>

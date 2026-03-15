@@ -2,6 +2,7 @@ import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { SettingsService, Settings } from '../../../core/services/settings/settings.service';
+import { API_CONFIG } from '../../../core/config/api-config';
 
 @Component({
   selector: 'app-footer',
@@ -17,7 +18,7 @@ export class FooterComponent {
   facebookUrl = '';
   tiktokUrl = '';
 
-  constructor(private settingsService: SettingsService) {}
+  constructor(private settingsService: SettingsService) { }
 
   ngOnInit() {
     this.settingsService.getSettings().subscribe({
@@ -55,5 +56,12 @@ export class FooterComponent {
     const message = (messageRaw || '').trim();
     const base = `https://wa.me/${number}`;
     return message ? `${base}?text=${encodeURIComponent(message)}` : base;
+  }
+
+  getLogoUrl(): string {
+    const url = (this.settings?.logo_url || '').trim();
+    if (!url) return 'assets/images/logo.png';
+    if (url.startsWith('http') || url.startsWith('data:')) return url;
+    return `${API_CONFIG.serverUrl}${url.startsWith('/') ? '' : '/'}${url}`;
   }
 }

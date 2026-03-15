@@ -307,11 +307,16 @@
                             <div class="flex-1 min-w-0">
                                 <p class="text-xs font-medium text-charcoal truncate uppercase tracking-wide">{{
                                     item.product.name }}</p>
-                                <p class="text-xs text-gray-500">x{{ item.quantity }}</p>
+                                <div class="cart-qty">
+                                    <button type="button" (click)="updateQuantity(item, -1)">−</button>
+                                    <input type="number" min="1" [value]="item.quantity" (change)="setQuantity(item, $any($event.target).value)">
+                                    <button type="button" (click)="updateQuantity(item, 1)">+</button>
+                                </div>
                             </div>
                             <p class="text-sm font-bold text-charcoal whitespace-nowrap">
                                 {{ getItemPrice(item) | currency:'COP':'symbol-narrow':'1.0-0' }}
                             </p>
+                            <button type="button" class="cart-remove" (click)="removeItem(item)">×</button>
                         </div>
                     </div>
 
@@ -320,6 +325,13 @@
                         <div class="flex justify-between text-sm text-gray-500">
                             <span>Subtotal</span>
                             <span>{{ cartTotal | currency:'COP':'symbol-narrow':'1.0-0' }}</span>
+                        </div>
+                        <div *ngIf="cartRecoveryDiscountAmount > 0" class="flex justify-between text-sm text-green-700">
+                            <span>Descuento recuperación</span>
+                            <span>-{{ cartRecoveryDiscountAmount | currency:'COP':'symbol-narrow':'1.0-0' }}</span>
+                        </div>
+                        <div *ngIf="cartRecoveryDiscountAmount > 0" class="text-[10px] text-green-700 uppercase tracking-widest font-bold">
+                            Descuento aplicado
                         </div>
                         <div class="flex justify-between text-sm text-gray-500">
                             <span>Envío</span>
@@ -348,6 +360,9 @@
                             <span>TOTAL</span>
                             <span>{{ grandTotal | currency:'COP':'symbol-narrow':'1.0-0' }}</span>
                         </div>
+                        <div *ngIf="cartRecoveryExpiredNotice" class="mt-2 text-[11px] uppercase tracking-widest font-bold text-amber-700">
+                            {{ cartRecoveryExpiredMessage }}
+                        </div>
                     </div>
 
                     <!-- CTA Button -->
@@ -361,8 +376,47 @@
                         {{ isPlacingOrder ? 'PROCESANDO...' : 'CONFIRMAR PEDIDO' }}
                     </button>
 
+                    <button type="button" (click)="cancelPurchase()"
+                        class="w-full mt-3 border border-[#dcdcd4] text-charcoal py-3 font-bold text-xs tracking-widest uppercase hover:bg-gray-50 transition-colors">
+                        Cancelar compra
+                    </button>
+
+                    <button type="button" (click)="clearCart()"
+                        class="w-full mt-2 text-[11px] font-bold uppercase tracking-widest text-gray-500 hover:text-charcoal">
+                        Vaciar carrito
+                    </button>
+
                     <p class="text-center text-xs text-gray-400 mt-3">🔒 Transacción segura y protegida</p>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <div *ngIf="showCartRecovery" class="cart-recovery-overlay">
+        <div class="cart-recovery-modal">
+            <button class="cart-recovery-close" type="button" (click)="closeCartRecovery()">×</button>
+            <div class="cart-recovery-badge">{{ cartRecoveryDiscountPct }}% OFF</div>
+            <h3 class="cart-recovery-title">Oferta especial por tiempo limitado</h3>
+            <p class="cart-recovery-message">{{ cartRecoveryMessage }}</p>
+            <div class="cart-recovery-timer">
+                <span>Finaliza en</span>
+                <strong>{{ cartRecoveryCountdownLabel }}</strong>
+            </div>
+            <button class="cart-recovery-action" type="button" (click)="onCartRecoveryAction()">
+                {{ cartRecoveryButtonText }}
+            </button>
+        </div>
+    </div>
+
+    <div *ngIf="showClearCartConfirm" class="cart-recovery-overlay">
+        <div class="cart-recovery-modal clear-cart-modal">
+            <button class="cart-recovery-close" type="button" (click)="closeClearCartConfirm()">×</button>
+            <div class="cart-recovery-badge">Carrito</div>
+            <h3 class="cart-recovery-title">Vaciar carrito</h3>
+            <p class="cart-recovery-message">Esta accion eliminara todos los productos del carrito.</p>
+            <div class="clear-cart-actions">
+                <button class="clear-cart-cancel" type="button" (click)="closeClearCartConfirm()">Cancelar</button>
+                <button class="clear-cart-confirm" type="button" (click)="confirmClearCart()">Vaciar</button>
             </div>
         </div>
     </div>

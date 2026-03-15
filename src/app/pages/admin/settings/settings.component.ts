@@ -31,6 +31,7 @@ export class SettingsComponent implements OnInit {
     logo_height_desktop: 112,
 
     instagram_url: '',
+    show_instagram_section: true,
     facebook_url: '',
     tiktok_url: '',
     whatsapp_number: '',
@@ -55,7 +56,16 @@ export class SettingsComponent implements OnInit {
     boutique_address_line1: 'Calle 12 #13-85',
     boutique_address_line2: 'Bogotá, Colombia',
     boutique_phone: '+57 (300) 123-4567',
-    boutique_email: 'contacto@perfumissimo.com'
+    boutique_email: 'contacto@perfumissimo.com',
+
+    alert_sales_delta_pct: 20,
+    alert_abandoned_delta_pct: 20,
+    alert_abandoned_value_threshold: 1000000,
+    alert_negative_reviews_threshold: 3,
+    alert_trend_growth_pct: 30,
+    alert_trend_min_units: 5,
+    alert_failed_login_threshold: 5,
+    alert_abandoned_hours: 24
   };
 
   selectedFile: File | null = null;
@@ -80,7 +90,8 @@ export class SettingsComponent implements OnInit {
           ...data,
           logo_height_mobile: (data as any)?.logo_height_mobile ?? 96,
           logo_height_desktop: (data as any)?.logo_height_desktop ?? 112,
-          logo_url: (data as any)?.logo_url ?? ''
+          logo_url: (data as any)?.logo_url ?? '',
+          show_instagram_section: (data as any)?.show_instagram_section ?? true
         };
 
         if (!(this.settings as any).banner_accent_color) {
@@ -243,6 +254,7 @@ export class SettingsComponent implements OnInit {
     formData.append('logo_height_desktop', String(this.settings.logo_height_desktop ?? 112));
 
     formData.append('instagram_url', this.settings.instagram_url || '');
+    formData.append('show_instagram_section', this.settings.show_instagram_section ? 'true' : 'false');
     formData.append('facebook_url', this.settings.facebook_url || '');
     formData.append('tiktok_url', this.settings.tiktok_url || '');
     formData.append('whatsapp_number', this.settings.whatsapp_number || '');
@@ -257,7 +269,9 @@ export class SettingsComponent implements OnInit {
     formData.append('email_bcc_orders', this.settings.email_bcc_orders || '');
 
     formData.append('smtp_host', String(this.settings.smtp_host || ''));
-    formData.append('smtp_port', String(this.settings.smtp_port ?? ''));
+    const smtpPort = Number(this.settings.smtp_port);
+    const safeSmtpPort = Number.isFinite(smtpPort) && smtpPort >= 1 ? smtpPort : 465;
+    formData.append('smtp_port', String(safeSmtpPort));
     formData.append('smtp_secure', this.settings.smtp_secure ? 'true' : 'false');
     formData.append('smtp_user', String(this.settings.smtp_user || ''));
     formData.append('smtp_from', String(this.settings.smtp_from || ''));
@@ -270,6 +284,15 @@ export class SettingsComponent implements OnInit {
     formData.append('boutique_address_line2', this.settings.boutique_address_line2 || '');
     formData.append('boutique_phone', this.settings.boutique_phone || '');
     formData.append('boutique_email', this.settings.boutique_email || '');
+
+    formData.append('alert_sales_delta_pct', String(this.settings.alert_sales_delta_pct ?? ''));
+    formData.append('alert_abandoned_delta_pct', String(this.settings.alert_abandoned_delta_pct ?? ''));
+    formData.append('alert_abandoned_value_threshold', String(this.settings.alert_abandoned_value_threshold ?? ''));
+    formData.append('alert_negative_reviews_threshold', String(this.settings.alert_negative_reviews_threshold ?? ''));
+    formData.append('alert_trend_growth_pct', String(this.settings.alert_trend_growth_pct ?? ''));
+    formData.append('alert_trend_min_units', String(this.settings.alert_trend_min_units ?? ''));
+    formData.append('alert_failed_login_threshold', String(this.settings.alert_failed_login_threshold ?? ''));
+    formData.append('alert_abandoned_hours', String(this.settings.alert_abandoned_hours ?? ''));
 
     // Token IG: solo enviar si el admin lo escribe (no sobreescribir si queda vacio)
     if (this.instagramTokenInput.trim()) {
@@ -344,6 +367,7 @@ export class SettingsComponent implements OnInit {
         logo_height_mobile: 96,
         logo_height_desktop: 112,
         instagram_url: '',
+        show_instagram_section: true,
         facebook_url: '',
         tiktok_url: '',
         whatsapp_number: '',
@@ -365,7 +389,16 @@ export class SettingsComponent implements OnInit {
         boutique_address_line1: 'Calle 12 #13-85',
         boutique_address_line2: 'Bogotá, Colombia',
         boutique_phone: '+57 (300) 123-4567',
-        boutique_email: 'contacto@perfumissimo.com'
+        boutique_email: 'contacto@perfumissimo.com',
+
+        alert_sales_delta_pct: 20,
+        alert_abandoned_delta_pct: 20,
+        alert_abandoned_value_threshold: 1000000,
+        alert_negative_reviews_threshold: 3,
+        alert_trend_growth_pct: 30,
+        alert_trend_min_units: 5,
+        alert_failed_login_threshold: 5,
+        alert_abandoned_hours: 24
       };
       this.selectedFile = null;
       this.selectedLogoFile = null;

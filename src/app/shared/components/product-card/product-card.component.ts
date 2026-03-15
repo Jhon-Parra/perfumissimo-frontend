@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { CartService } from '../../../core/services/cart/cart.service';
 import { FavoritesService } from '../../../core/services/favorites/favorites.service';
 import { Router } from '@angular/router';
+import { ToastService } from '../toast/toast.service';
 
 export interface Product {
   id: string;
@@ -46,7 +47,8 @@ export class ProductCardComponent {
   constructor(
     private cartService: CartService,
     private favoritesService: FavoritesService,
-    private router: Router
+    private router: Router,
+    private toastService: ToastService
   ) { }
 
   getCategorySlug(): string {
@@ -94,6 +96,8 @@ export class ProductCardComponent {
   addToCart(event?: Event) {
     event?.stopPropagation();
     this.cartService.addToCart(this.product);
+    const name = this.product?.name || this.product?.nombre || 'Producto';
+    this.toastService.success(`${name} se agregó al carrito de compras.`);
   }
 
   getOriginalPrice(): number {

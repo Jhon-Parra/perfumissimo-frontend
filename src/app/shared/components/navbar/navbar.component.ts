@@ -2,7 +2,7 @@ import { Component, OnDestroy, OnInit } from '@angular/core';
 import { RouterLink, Router, NavigationEnd, RouterLinkActive } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { CartService } from '../../../core/services/cart/cart.service';
+import { CartService, CartItem } from '../../../core/services/cart/cart.service';
 import { FavoritesService } from '../../../core/services/favorites/favorites.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { SettingsService, Settings } from '../../../core/services/settings/settings.service';
@@ -19,6 +19,7 @@ import { API_CONFIG } from '../../../core/config/api-config';
 })
 export class NavbarComponent implements OnInit, OnDestroy {
   cartItemCount$!: Observable<number>;
+  cartItems$!: Observable<CartItem[]>;
   favoritesCount$!: Observable<number>;
   settings: Settings | null = null;
   searchTerm = '';
@@ -37,6 +38,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
     this.cartItemCount$ = this.cartService.items$.pipe(
       map(items => items.reduce((acc, item) => acc + item.quantity, 0))
     );
+    this.cartItems$ = this.cartService.items$;
     this.favoritesCount$ = this.favoritesService.favorites$.pipe(
       map(items => items.length)
     );
@@ -87,6 +89,33 @@ export class NavbarComponent implements OnInit, OnDestroy {
       '--logo-h-mobile': `${safeMobile}px`,
       '--logo-h-desktop': `${safeDesktop}px`,
     };
+  }
+
+  getCartItemImage(item: CartItem): string {
+    const raw = String(item?.product?.imageUrl || item?.product?.imagen_url || '').trim();
+    if (!raw) return 'https://images.unsplash.com/photo-1594035910387-fea47714263f?q=80&w=100';
+    if (raw.startsWith('http') || raw.startsWith('data:')) return raw;
+    return `${API_CONFIG.serverUrl}${raw.startsWith('/') ? '' : '/'}${raw}`;
+  }
+
+  getCartItemName(item: CartItem): string {
+    return String(item?.product?.name || item?.product?.nombre || 'Producto').trim();
+  }
+
+  getCartItemUnitPrice(item: CartItem): number {
+    const discounted: any = (item?.product as any)?.precio_con_descuento;
+    if (discounted !== null && discounted !== undefined && discounted !== '') {
+      const n = typeof discounted === 'string' ? parseFloat(discounted) : Number(discounted);
+      if (Number.isFinite(n)) return n;
+    }
+    const v: any = (item?.product as any)?.price ?? (item?.product as any)?.precio;
+    const n = typeof v === 'string' ? parseFloat(v) : Number(v);
+    return Number.isFinite(n) ? n : 0;
+  }
+
+  getCartSubtotal(items: CartItem[] | null | undefined): number {
+    if (!items || items.length === 0) return 0;
+    return items.reduce((sum, item) => sum + (this.getCartItemUnitPrice(item) * item.quantity), 0);
   }
 
   logout() {

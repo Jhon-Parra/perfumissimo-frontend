@@ -7,6 +7,7 @@ import { AuthService } from '../../../core/services/auth.service';
 import { ProductService, Product as ApiProduct } from '../../../core/services/product/product.service';
 import { CategoryService, Category } from '../../../core/services/category/category.service';
 import { LowStockBellComponent } from '../../../shared/components/low-stock-bell/low-stock-bell.component';
+import { ToastService } from '../../../shared/components/toast/toast.service';
 
 type PromotionForm = {
   nombre: string;
@@ -79,8 +80,9 @@ export class PromotionsComponent implements OnInit {
     private promotionService: PromotionService,
     private authService: AuthService,
     private productService: ProductService,
-    private categoryService: CategoryService
-  ) {}
+    private categoryService: CategoryService,
+    private toastService: ToastService
+  ) { }
 
   ngOnInit(): void {
     this.load();
@@ -338,6 +340,14 @@ export class PromotionsComponent implements OnInit {
 
   toggleActive(promo: Promotion): void {
     const nextActive = !promo.activo;
+    if (nextActive) {
+      const now = Date.now();
+      const end = new Date(promo.fecha_fin).getTime();
+      if (!Number.isFinite(end) || end < now) {
+        this.toastService.warning('La promoción está vencida. Actualiza la fecha de fin antes de activarla.');
+        return;
+      }
+    }
     this.promotionService.setActive(promo.id, nextActive).subscribe({
       next: () => {
         promo.activo = nextActive;
@@ -368,8 +378,44 @@ export class PromotionsComponent implements OnInit {
   }
 
   isActiveNow(p: Promotion): boolean {
+    if (!p.activo) return false;
     const now = Date.now();
-    return !!p.activo && new Date(p.fecha_inicio).getTime() <= now && new Date(p.fecha_fin).getTime() >= now;
+    const start = new Date(p.fecha_inicio).getTime();
+    const end = new Date(p.fecha_fin).getTime();
+    return now >= start && now <= end;
+  }
+
+  getPromotionStatus(p: Promotion): 'ACTIVA' | 'EXPIRADA' | 'PROGRAMADA' | 'DESACTIVADA' {
+    if (!p.activo) return 'DESACTIVADA';
+    const now = Date.now();
+    const start = new Date(p.fecha_inicio).getTime();
+    const end = new Date(p.fecha_fin).getTime();
+
+    if (now < start) return 'PROGRAMADA';
+    if (now > end) return 'EXPIRADA';
+    return 'ACTIVA';
+  }
+
+  getStatusLabel(p: Promotion): string {
+    const status = this.getPromotionStatus(p);
+    switch (status) {
+      case 'ACTIVA': return 'Activa';
+      case 'EXPIRADA': return 'Expirada';
+      case 'PROGRAMADA': return 'Programada';
+      case 'DESACTIVADA': return 'Desactivada';
+      default: return 'Desconocido';
+    }
+  }
+
+  getStatusClass(p: Promotion): string {
+    const status = this.getPromotionStatus(p);
+    switch (status) {
+      case 'ACTIVA': return 'bg-green-100 text-green-800 border-green-200';
+      case 'EXPIRADA': return 'bg-amber-100 text-amber-800 border-amber-200';
+      case 'PROGRAMADA': return 'bg-blue-100 text-blue-800 border-blue-200';
+      case 'DESACTIVADA': return 'bg-red-100 text-red-800 border-red-200';
+      default: return 'bg-gray-100 text-gray-800 border-gray-200';
+    }
   }
 
   toggleProduct(productId: string): void {
